@@ -1,0 +1,191 @@
+{
+  "summaryVersion": 1,
+  "kind": "p1-acceptance-summary",
+  "generatedAt": "2026-10-03T17:41:19.406Z",
+  "suiteId": "p1-sol-final-20261004",
+  "overallStatus": "pass",
+  "implementationMatches": true,
+  "p2GateOpen": true,
+  "requiredRequirements": [
+    "real-channel",
+    "identity",
+    "platform-message-id",
+    "three-pages-no-scroll",
+    "sent-time",
+    "history-end",
+    "cursor-recovery",
+    "message-semantics"
+  ],
+  "items": [
+    {
+      "key": "real-channel",
+      "status": "pass",
+      "evidenceSources": [
+        {
+          "task": "chain",
+          "runId": "03b1e47c-003a-4ccd-8a2b-e6a3e04296df",
+          "reportPath": "C:\\Users\\25222\\AppData\\Local\\DouyinChatArchive\\probe-reports\\p1-p1-sol-final-20261004-chain-03b1e47c-003a-4ccd-8a2b-e6a3e04296df.json",
+          "reportSha256": "3fb5f9662f21a17dd5c6ce71cca8188c6e8465a7bfd53d80b7366784afd90045",
+          "reportStatus": "pass",
+          "codeVersionHash": "src/im/init-protocol.ts:30159423bf122fee64945c9b0e7c2397e06e565d0029e881dc14a88aa5d5defa|src/im/protocol.ts:6e1279bc4e0d24ab0e9ffc42b6379c00844d4d9f161ee06be212cecff6897a7c|src/im/wire.ts:61c61581708738321b9ec8784438d794f02aed6979dec6203e79b8908d5d4906|src/probe/checkpoint.ts:ef41cf8207cb747c6e6207d07c38a05597cdfc9e082b617ec8277f8582271f51|src/probe/history-transport.ts:3eb4163ee1576d9f050d11f008bca763b172f30af0b3f007a1a00ee0e43d8e68|src/probe/history-verifier.ts:ad252bfe0a9556bc1453e26428454d051f78372290de062e086b0de6c1eb6898|src/probe/live-report.ts:d9705a8ad336408db52cf6d03e65cbee7c551aadb6aba1c0bb24e8da71b50080|src/probe/message-info-time.ts:1820f466aa2ba3480316bfba01e59c627d1cc815b210d46d97914a80c4326382|src/probe/p1-summary.ts:65928972ed9a02131b5a615d5052f374aa0bf5654c5037c56714338f21e45483|src/probe/page-state.ts:b10ea63808f0a6cd80bbd3de81123772589724bbc8fa519689b3d39887de6e70|src/probe/time-evidence.ts:bd14c40278922e15ddb38b4002ddaf315e2f55111fdae32cef53fd1e2221e065|src/probe/time-mapping-source.ts:4ebe03e317b7bdb7ce88e8ade261709d4a8230978d28441086f350abc7a504f4|src/probe/time-verifier.ts:d5e2aa426a8112035094a391d062d913c465a9e96d9bae737d7cf7b5137ceb26|src/probe/time-window.ts:fab451c0e8f46fd24f61d2415c7df43ee46a249719cee672cce2079b2611c729|src/probe/verification-suite.ts:972a9e55df9887cbfd66a36767e72f074550c2404018a59dbb8e06d22d0d62a9|src/probe/verify-entry.ts:ca77ae64b4afba540798beed3669ffab05109dca04a1f4c0eafa6ad98599d374",
+          "protocolMappingVersion": "p1-history-and-init-protocol-v4",
+          "timeMappingVersion": "p1-official-ui-copy-time-v7"
+        }
+      ],
+      "applicableTasks": [
+        "chain"
+      ],
+      "gaps": []
+    },
+    {
+      "key": "identity",
+      "status": "pass",
+      "evidenceSources": [
+        {
+          "task": "chain",
+          "runId": "03b1e47c-003a-4ccd-8a2b-e6a3e04296df",
+          "reportPath": "C:\\Users\\25222\\AppData\\Local\\DouyinChatArchive\\probe-reports\\p1-p1-sol-final-20261004-chain-03b1e47c-003a-4ccd-8a2b-e6a3e04296df.json",
+          "reportSha256": "3fb5f9662f21a17dd5c6ce71cca8188c6e8465a7bfd53d80b7366784afd90045",
+          "reportStatus": "pass",
+          "codeVersionHash": "src/im/init-protocol.ts:30159423bf122fee64945c9b0e7c2397e06e565d0029e881dc14a88aa5d5defa|src/im/protocol.ts:6e1279bc4e0d24ab0e9ffc42b6379c00844d4d9f161ee06be212cecff6897a7c|src/im/wire.ts:61c61581708738321b9ec8784438d794f02aed6979dec6203e79b8908d5d4906|src/probe/checkpoint.ts:ef41cf8207cb747c6e6207d07c38a05597cdfc9e082b617ec8277f8582271f51|src/probe/history-transport.ts:3eb4163ee1576d9f050d11f008bca763b172f30af0b3f007a1a00ee0e43d8e68|src/probe/history-verifier.ts:ad252bfe0a9556bc1453e26428454d051f78372290de062e086b0de6c1eb6898|src/probe/live-report.ts:d9705a8ad336408db52cf6d03e65cbee7c551aadb6aba1c0bb24e8da71b50080|src/probe/message-info-time.ts:1820f466aa2ba3480316bfba01e59c627d1cc815b210d46d97914a80c4326382|src/probe/p1-summary.ts:65928972ed9a02131b5a615d5052f374aa0bf5654c5037c56714338f21e45483|src/probe/page-state.ts:b10ea63808f0a6cd80bbd3de81123772589724bbc8fa519689b3d39887de6e70|src/probe/time-evidence.ts:bd14c40278922e15ddb38b4002ddaf315e2f55111fdae32cef53fd1e2221e065|src/probe/time-mapping-source.ts:4ebe03e317b7bdb7ce88e8ade261709d4a8230978d28441086f350abc7a504f4|src/probe/time-verifier.ts:d5e2aa426a8112035094a391d062d913c465a9e96d9bae737d7cf7b5137ceb26|src/probe/time-window.ts:fab451c0e8f46fd24f61d2415c7df43ee46a249719cee672cce2079b2611c729|src/probe/verification-suite.ts:972a9e55df9887cbfd66a36767e72f074550c2404018a59dbb8e06d22d0d62a9|src/probe/verify-entry.ts:ca77ae64b4afba540798beed3669ffab05109dca04a1f4c0eafa6ad98599d374",
+          "protocolMappingVersion": "p1-history-and-init-protocol-v4",
+          "timeMappingVersion": "p1-official-ui-copy-time-v7"
+        }
+      ],
+      "applicableTasks": [
+        "chain"
+      ],
+      "gaps": []
+    },
+    {
+      "key": "platform-message-id",
+      "status": "pass",
+      "evidenceSources": [
+        {
+          "task": "chain",
+          "runId": "03b1e47c-003a-4ccd-8a2b-e6a3e04296df",
+          "reportPath": "C:\\Users\\25222\\AppData\\Local\\DouyinChatArchive\\probe-reports\\p1-p1-sol-final-20261004-chain-03b1e47c-003a-4ccd-8a2b-e6a3e04296df.json",
+          "reportSha256": "3fb5f9662f21a17dd5c6ce71cca8188c6e8465a7bfd53d80b7366784afd90045",
+          "reportStatus": "pass",
+          "codeVersionHash": "src/im/init-protocol.ts:30159423bf122fee64945c9b0e7c2397e06e565d0029e881dc14a88aa5d5defa|src/im/protocol.ts:6e1279bc4e0d24ab0e9ffc42b6379c00844d4d9f161ee06be212cecff6897a7c|src/im/wire.ts:61c61581708738321b9ec8784438d794f02aed6979dec6203e79b8908d5d4906|src/probe/checkpoint.ts:ef41cf8207cb747c6e6207d07c38a05597cdfc9e082b617ec8277f8582271f51|src/probe/history-transport.ts:3eb4163ee1576d9f050d11f008bca763b172f30af0b3f007a1a00ee0e43d8e68|src/probe/history-verifier.ts:ad252bfe0a9556bc1453e26428454d051f78372290de062e086b0de6c1eb6898|src/probe/live-report.ts:d9705a8ad336408db52cf6d03e65cbee7c551aadb6aba1c0bb24e8da71b50080|src/probe/message-info-time.ts:1820f466aa2ba3480316bfba01e59c627d1cc815b210d46d97914a80c4326382|src/probe/p1-summary.ts:65928972ed9a02131b5a615d5052f374aa0bf5654c5037c56714338f21e45483|src/probe/page-state.ts:b10ea63808f0a6cd80bbd3de81123772589724bbc8fa519689b3d39887de6e70|src/probe/time-evidence.ts:bd14c40278922e15ddb38b4002ddaf315e2f55111fdae32cef53fd1e2221e065|src/probe/time-mapping-source.ts:4ebe03e317b7bdb7ce88e8ade261709d4a8230978d28441086f350abc7a504f4|src/probe/time-verifier.ts:d5e2aa426a8112035094a391d062d913c465a9e96d9bae737d7cf7b5137ceb26|src/probe/time-window.ts:fab451c0e8f46fd24f61d2415c7df43ee46a249719cee672cce2079b2611c729|src/probe/verification-suite.ts:972a9e55df9887cbfd66a36767e72f074550c2404018a59dbb8e06d22d0d62a9|src/probe/verify-entry.ts:ca77ae64b4afba540798beed3669ffab05109dca04a1f4c0eafa6ad98599d374",
+          "protocolMappingVersion": "p1-history-and-init-protocol-v4",
+          "timeMappingVersion": "p1-official-ui-copy-time-v7"
+        }
+      ],
+      "applicableTasks": [
+        "chain"
+      ],
+      "gaps": []
+    },
+    {
+      "key": "three-pages-no-scroll",
+      "status": "pass",
+      "evidenceSources": [
+        {
+          "task": "chain",
+          "runId": "03b1e47c-003a-4ccd-8a2b-e6a3e04296df",
+          "reportPath": "C:\\Users\\25222\\AppData\\Local\\DouyinChatArchive\\probe-reports\\p1-p1-sol-final-20261004-chain-03b1e47c-003a-4ccd-8a2b-e6a3e04296df.json",
+          "reportSha256": "3fb5f9662f21a17dd5c6ce71cca8188c6e8465a7bfd53d80b7366784afd90045",
+          "reportStatus": "pass",
+          "codeVersionHash": "src/im/init-protocol.ts:30159423bf122fee64945c9b0e7c2397e06e565d0029e881dc14a88aa5d5defa|src/im/protocol.ts:6e1279bc4e0d24ab0e9ffc42b6379c00844d4d9f161ee06be212cecff6897a7c|src/im/wire.ts:61c61581708738321b9ec8784438d794f02aed6979dec6203e79b8908d5d4906|src/probe/checkpoint.ts:ef41cf8207cb747c6e6207d07c38a05597cdfc9e082b617ec8277f8582271f51|src/probe/history-transport.ts:3eb4163ee1576d9f050d11f008bca763b172f30af0b3f007a1a00ee0e43d8e68|src/probe/history-verifier.ts:ad252bfe0a9556bc1453e26428454d051f78372290de062e086b0de6c1eb6898|src/probe/live-report.ts:d9705a8ad336408db52cf6d03e65cbee7c551aadb6aba1c0bb24e8da71b50080|src/probe/message-info-time.ts:1820f466aa2ba3480316bfba01e59c627d1cc815b210d46d97914a80c4326382|src/probe/p1-summary.ts:65928972ed9a02131b5a615d5052f374aa0bf5654c5037c56714338f21e45483|src/probe/page-state.ts:b10ea63808f0a6cd80bbd3de81123772589724bbc8fa519689b3d39887de6e70|src/probe/time-evidence.ts:bd14c40278922e15ddb38b4002ddaf315e2f55111fdae32cef53fd1e2221e065|src/probe/time-mapping-source.ts:4ebe03e317b7bdb7ce88e8ade261709d4a8230978d28441086f350abc7a504f4|src/probe/time-verifier.ts:d5e2aa426a8112035094a391d062d913c465a9e96d9bae737d7cf7b5137ceb26|src/probe/time-window.ts:fab451c0e8f46fd24f61d2415c7df43ee46a249719cee672cce2079b2611c729|src/probe/verification-suite.ts:972a9e55df9887cbfd66a36767e72f074550c2404018a59dbb8e06d22d0d62a9|src/probe/verify-entry.ts:ca77ae64b4afba540798beed3669ffab05109dca04a1f4c0eafa6ad98599d374",
+          "protocolMappingVersion": "p1-history-and-init-protocol-v4",
+          "timeMappingVersion": "p1-official-ui-copy-time-v7"
+        }
+      ],
+      "applicableTasks": [
+        "chain"
+      ],
+      "gaps": []
+    },
+    {
+      "key": "sent-time",
+      "status": "pass",
+      "evidenceSources": [
+        {
+          "task": "time",
+          "runId": "0fe065df-7d98-48ac-98c3-2b59a2ef730e",
+          "reportPath": "C:\\Users\\25222\\AppData\\Local\\DouyinChatArchive\\probe-reports\\p1-p1-sol-final-20261004-time-0fe065df-7d98-48ac-98c3-2b59a2ef730e.json",
+          "reportSha256": "0a779884d357932082770aafd67eab68854a9a38fb794052e7ef7f8f188c5219",
+          "reportStatus": "pass",
+          "codeVersionHash": "src/im/init-protocol.ts:30159423bf122fee64945c9b0e7c2397e06e565d0029e881dc14a88aa5d5defa|src/im/protocol.ts:6e1279bc4e0d24ab0e9ffc42b6379c00844d4d9f161ee06be212cecff6897a7c|src/im/wire.ts:61c61581708738321b9ec8784438d794f02aed6979dec6203e79b8908d5d4906|src/probe/checkpoint.ts:ef41cf8207cb747c6e6207d07c38a05597cdfc9e082b617ec8277f8582271f51|src/probe/history-transport.ts:3eb4163ee1576d9f050d11f008bca763b172f30af0b3f007a1a00ee0e43d8e68|src/probe/history-verifier.ts:ad252bfe0a9556bc1453e26428454d051f78372290de062e086b0de6c1eb6898|src/probe/live-report.ts:d9705a8ad336408db52cf6d03e65cbee7c551aadb6aba1c0bb24e8da71b50080|src/probe/message-info-time.ts:1820f466aa2ba3480316bfba01e59c627d1cc815b210d46d97914a80c4326382|src/probe/p1-summary.ts:65928972ed9a02131b5a615d5052f374aa0bf5654c5037c56714338f21e45483|src/probe/page-state.ts:b10ea63808f0a6cd80bbd3de81123772589724bbc8fa519689b3d39887de6e70|src/probe/time-evidence.ts:bd14c40278922e15ddb38b4002ddaf315e2f55111fdae32cef53fd1e2221e065|src/probe/time-mapping-source.ts:4ebe03e317b7bdb7ce88e8ade261709d4a8230978d28441086f350abc7a504f4|src/probe/time-verifier.ts:d5e2aa426a8112035094a391d062d913c465a9e96d9bae737d7cf7b5137ceb26|src/probe/time-window.ts:fab451c0e8f46fd24f61d2415c7df43ee46a249719cee672cce2079b2611c729|src/probe/verification-suite.ts:972a9e55df9887cbfd66a36767e72f074550c2404018a59dbb8e06d22d0d62a9|src/probe/verify-entry.ts:ca77ae64b4afba540798beed3669ffab05109dca04a1f4c0eafa6ad98599d374",
+          "protocolMappingVersion": "p1-history-and-init-protocol-v4",
+          "timeMappingVersion": "p1-official-ui-copy-time-v7"
+        }
+      ],
+      "applicableTasks": [
+        "time"
+      ],
+      "gaps": []
+    },
+    {
+      "key": "history-end",
+      "status": "pass",
+      "evidenceSources": [
+        {
+          "task": "endpoint",
+          "runId": "440bbe84-6f47-4fd8-b6c5-221b1ea7a228",
+          "reportPath": "C:\\Users\\25222\\AppData\\Local\\DouyinChatArchive\\probe-reports\\p1-p1-sol-final-20261004-endpoint-440bbe84-6f47-4fd8-b6c5-221b1ea7a228.json",
+          "reportSha256": "5168fb5f4d72a6e7675bb6653ace2723d02ee034c20d29b91fcb0800e9ee7116",
+          "reportStatus": "pass",
+          "codeVersionHash": "src/im/init-protocol.ts:30159423bf122fee64945c9b0e7c2397e06e565d0029e881dc14a88aa5d5defa|src/im/protocol.ts:6e1279bc4e0d24ab0e9ffc42b6379c00844d4d9f161ee06be212cecff6897a7c|src/im/wire.ts:61c61581708738321b9ec8784438d794f02aed6979dec6203e79b8908d5d4906|src/probe/checkpoint.ts:ef41cf8207cb747c6e6207d07c38a05597cdfc9e082b617ec8277f8582271f51|src/probe/history-transport.ts:3eb4163ee1576d9f050d11f008bca763b172f30af0b3f007a1a00ee0e43d8e68|src/probe/history-verifier.ts:ad252bfe0a9556bc1453e26428454d051f78372290de062e086b0de6c1eb6898|src/probe/live-report.ts:d9705a8ad336408db52cf6d03e65cbee7c551aadb6aba1c0bb24e8da71b50080|src/probe/message-info-time.ts:1820f466aa2ba3480316bfba01e59c627d1cc815b210d46d97914a80c4326382|src/probe/p1-summary.ts:65928972ed9a02131b5a615d5052f374aa0bf5654c5037c56714338f21e45483|src/probe/page-state.ts:b10ea63808f0a6cd80bbd3de81123772589724bbc8fa519689b3d39887de6e70|src/probe/time-evidence.ts:bd14c40278922e15ddb38b4002ddaf315e2f55111fdae32cef53fd1e2221e065|src/probe/time-mapping-source.ts:4ebe03e317b7bdb7ce88e8ade261709d4a8230978d28441086f350abc7a504f4|src/probe/time-verifier.ts:d5e2aa426a8112035094a391d062d913c465a9e96d9bae737d7cf7b5137ceb26|src/probe/time-window.ts:fab451c0e8f46fd24f61d2415c7df43ee46a249719cee672cce2079b2611c729|src/probe/verification-suite.ts:972a9e55df9887cbfd66a36767e72f074550c2404018a59dbb8e06d22d0d62a9|src/probe/verify-entry.ts:ca77ae64b4afba540798beed3669ffab05109dca04a1f4c0eafa6ad98599d374",
+          "protocolMappingVersion": "p1-history-and-init-protocol-v4",
+          "timeMappingVersion": "p1-official-ui-copy-time-v7"
+        }
+      ],
+      "applicableTasks": [
+        "endpoint"
+      ],
+      "gaps": []
+    },
+    {
+      "key": "cursor-recovery",
+      "status": "pass",
+      "evidenceSources": [
+        {
+          "task": "recovery",
+          "runId": "dd4ac000-5e36-41bd-8561-5ee899e2bf2d",
+          "reportPath": "C:\\Users\\25222\\AppData\\Local\\DouyinChatArchive\\probe-reports\\p1-p1-sol-final-20261004-recovery-dd4ac000-5e36-41bd-8561-5ee899e2bf2d.json",
+          "reportSha256": "fac5fa8eb7ab4d895377cc7d86661504fcc675598949fa2d227f75d1b84d4199",
+          "reportStatus": "pass",
+          "codeVersionHash": "src/im/init-protocol.ts:30159423bf122fee64945c9b0e7c2397e06e565d0029e881dc14a88aa5d5defa|src/im/protocol.ts:6e1279bc4e0d24ab0e9ffc42b6379c00844d4d9f161ee06be212cecff6897a7c|src/im/wire.ts:61c61581708738321b9ec8784438d794f02aed6979dec6203e79b8908d5d4906|src/probe/checkpoint.ts:ef41cf8207cb747c6e6207d07c38a05597cdfc9e082b617ec8277f8582271f51|src/probe/history-transport.ts:3eb4163ee1576d9f050d11f008bca763b172f30af0b3f007a1a00ee0e43d8e68|src/probe/history-verifier.ts:ad252bfe0a9556bc1453e26428454d051f78372290de062e086b0de6c1eb6898|src/probe/live-report.ts:d9705a8ad336408db52cf6d03e65cbee7c551aadb6aba1c0bb24e8da71b50080|src/probe/message-info-time.ts:1820f466aa2ba3480316bfba01e59c627d1cc815b210d46d97914a80c4326382|src/probe/p1-summary.ts:65928972ed9a02131b5a615d5052f374aa0bf5654c5037c56714338f21e45483|src/probe/page-state.ts:b10ea63808f0a6cd80bbd3de81123772589724bbc8fa519689b3d39887de6e70|src/probe/time-evidence.ts:bd14c40278922e15ddb38b4002ddaf315e2f55111fdae32cef53fd1e2221e065|src/probe/time-mapping-source.ts:4ebe03e317b7bdb7ce88e8ade261709d4a8230978d28441086f350abc7a504f4|src/probe/time-verifier.ts:d5e2aa426a8112035094a391d062d913c465a9e96d9bae737d7cf7b5137ceb26|src/probe/time-window.ts:fab451c0e8f46fd24f61d2415c7df43ee46a249719cee672cce2079b2611c729|src/probe/verification-suite.ts:972a9e55df9887cbfd66a36767e72f074550c2404018a59dbb8e06d22d0d62a9|src/probe/verify-entry.ts:ca77ae64b4afba540798beed3669ffab05109dca04a1f4c0eafa6ad98599d374",
+          "protocolMappingVersion": "p1-history-and-init-protocol-v4",
+          "timeMappingVersion": "p1-official-ui-copy-time-v7"
+        }
+      ],
+      "applicableTasks": [
+        "recovery"
+      ],
+      "gaps": []
+    },
+    {
+      "key": "message-semantics",
+      "status": "pass",
+      "evidenceSources": [
+        {
+          "task": "semantics",
+          "runId": "af499996-c199-41fd-bac9-5337983e42df",
+          "reportPath": "C:\\Users\\25222\\AppData\\Local\\DouyinChatArchive\\probe-reports\\p1-p1-sol-final-20261004-semantics-af499996-c199-41fd-bac9-5337983e42df.json",
+          "reportSha256": "89d9e3b66e8aa31028dbeab758a3eef6b3193f96ca91725ed11ff36141ade664",
+          "reportStatus": "pass",
+          "codeVersionHash": "src/im/init-protocol.ts:30159423bf122fee64945c9b0e7c2397e06e565d0029e881dc14a88aa5d5defa|src/im/protocol.ts:6e1279bc4e0d24ab0e9ffc42b6379c00844d4d9f161ee06be212cecff6897a7c|src/im/wire.ts:61c61581708738321b9ec8784438d794f02aed6979dec6203e79b8908d5d4906|src/probe/checkpoint.ts:ef41cf8207cb747c6e6207d07c38a05597cdfc9e082b617ec8277f8582271f51|src/probe/history-transport.ts:3eb4163ee1576d9f050d11f008bca763b172f30af0b3f007a1a00ee0e43d8e68|src/probe/history-verifier.ts:ad252bfe0a9556bc1453e26428454d051f78372290de062e086b0de6c1eb6898|src/probe/live-report.ts:d9705a8ad336408db52cf6d03e65cbee7c551aadb6aba1c0bb24e8da71b50080|src/probe/message-info-time.ts:1820f466aa2ba3480316bfba01e59c627d1cc815b210d46d97914a80c4326382|src/probe/p1-summary.ts:65928972ed9a02131b5a615d5052f374aa0bf5654c5037c56714338f21e45483|src/probe/page-state.ts:b10ea63808f0a6cd80bbd3de81123772589724bbc8fa519689b3d39887de6e70|src/probe/time-evidence.ts:bd14c40278922e15ddb38b4002ddaf315e2f55111fdae32cef53fd1e2221e065|src/probe/time-mapping-source.ts:4ebe03e317b7bdb7ce88e8ade261709d4a8230978d28441086f350abc7a504f4|src/probe/time-verifier.ts:d5e2aa426a8112035094a391d062d913c465a9e96d9bae737d7cf7b5137ceb26|src/probe/time-window.ts:fab451c0e8f46fd24f61d2415c7df43ee46a249719cee672cce2079b2611c729|src/probe/verification-suite.ts:972a9e55df9887cbfd66a36767e72f074550c2404018a59dbb8e06d22d0d62a9|src/probe/verify-entry.ts:ca77ae64b4afba540798beed3669ffab05109dca04a1f4c0eafa6ad98599d374",
+          "protocolMappingVersion": "p1-history-and-init-protocol-v4",
+          "timeMappingVersion": "p1-official-ui-copy-time-v7"
+        }
+      ],
+      "applicableTasks": [
+        "semantics"
+      ],
+      "gaps": []
+    }
+  ],
+  "ignoredEvidence": [],
+  "privacy": {
+    "note": "汇总只引用不可变分项报告的散列、任务、版本和脱敏判定，不保存原始消息、账号、会话、游标或认证材料。",
+    "omitted": [
+      "聊天正文和媒体 URL",
+      "原始账号/会话/消息 ID",
+      "认证材料",
+      "suite 私有 HMAC 密钥"
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "kind": "structural-reference-comparison",
+  "generatedAt": "2026-10-03T06:46:46.093Z",
+  "sourceReportGeneratedAt": "2026-10-02T13:38:05.653Z",
+  "p1Passed": false,
+  "requests": [
+    {
+      "candidateShapeMatches": true,
+      "fixedShortIdField3DigitCounts": [
+        19
+      ],
+      "paginationField5DigitCounts": [
+        16
+      ],
+      "repeatedHeaderField15Count": 17
+    }
+  ],
+  "responses": [
+    {
+      "candidateShapeMatches": true,
+      "repeatedMessageCount": 50,
+      "retainedMessageSampleMatches": true,
+      "indexField4DigitCounts": [
+        16
+      ],
+      "candidateTimeField10DigitCounts": [
+        13
+      ],
+      "candidateReferenceField18PresentInRetainedSample": false
+    }
+  ],
+  "limitations": [
+    "字段形状匹配只能支持候选映射，不能验证字段值、时间单位或请求成功状态。",
+    "旧报告的重复消息只保留最后一项的嵌套形状，不能据此推断全部消息类型或引用样本。",
+    "本命令不会联网、启动浏览器或证明连续三页、游标推进及历史终点。"
+  ]
+}

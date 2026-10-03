@@ -1,0 +1,13 @@
+appId: local.douyin.chat.archive
+productName: 抖音私聊档案
+directories:
+  output: ../desktop-release
+files:
+  - dist/**/*
+  - package.json
+asar: true
+npmRebuild: true
+win:
+  target:
+    - portable
+  artifactName: douyin-chat-archive-${version}-portable.${ext}

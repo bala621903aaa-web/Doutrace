@@ -1,0 +1,71 @@
+syntax = "proto3";
+package douyin_archive.p1_candidate;
+
+// Investigation aid, independently written from public field mappings.
+// This is an incomplete candidate schema, not an official Douyin contract.
+// See P1-REFERENCE-RESEARCH.md for immutable sources and conflicting mappings.
+// Raw indices/cursors are not assigned a time unit. Optional fields preserve
+// the distinction between an absent flag/status and an explicitly encoded 0.
+
+message HistoryRequestEnvelopeCandidate {
+  optional int32 command = 1;                 // expected: 301
+  optional uint64 sequence_id = 2;
+  HistoryRequestBodyCandidate body = 8;
+  // Auth and fingerprint fields are intentionally not represented here.
+}
+
+message HistoryRequestBodyCandidate {
+  HistoryQueryCandidate history = 301;
+}
+
+message HistoryQueryCandidate {
+  optional string conversation_id = 1;
+  optional int32 conversation_type_candidate = 2;
+  optional uint64 conversation_short_id_candidate = 3; // fixed per conversation
+  optional int32 direction_candidate = 4;
+  optional uint64 cursor_raw = 5;                       // pagination candidate
+  optional int32 limit = 6;
+}
+
+message HistoryResponseEnvelopeCandidate {
+  optional int32 command = 1;
+  optional uint64 sequence_id = 2;
+  optional int32 status_code_candidate = 3; // actual probe: VARINT, not string
+  HistoryResponseBodyCandidate body = 6;
+}
+
+message HistoryResponseBodyCandidate {
+  HistoryPageCandidate history = 301;
+}
+
+message HistoryPageCandidate {
+  repeated MessageCandidate messages = 1;
+  optional uint64 next_cursor_raw = 2;
+  optional bool has_more_candidate = 3;
+}
+
+message MessageCandidate {
+  optional string conversation_id = 1;
+  optional int32 conversation_type_candidate = 2;
+  optional uint64 server_message_id_candidate = 3;
+  optional uint64 index_in_conversation_candidate = 4; // upstream calls it an index
+  optional uint64 conversation_short_id_candidate = 5;
+  optional int32 message_type_candidate = 6;
+  optional uint64 sender_uid_candidate = 7;
+  optional string content_json_candidate = 8;
+  repeated ExtensionCandidate ext = 9;
+  optional uint64 time_field10_candidate_raw = 10;     // observed: 13 digits; unit unverified
+  optional uint64 order_field13_candidate_raw = 13;
+  optional string sender_sec_uid_candidate = 14;
+  ReferenceCandidate reference_field18_candidate = 18;
+}
+
+message ExtensionCandidate {
+  optional string key = 1;
+  optional string value = 2;
+}
+
+message ReferenceCandidate {
+  optional uint64 target_message_id_candidate = 1;
+  optional string snapshot_json_candidate = 2;
+}

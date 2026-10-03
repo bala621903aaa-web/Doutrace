@@ -1,0 +1,52 @@
+{
+  "name": "douyin-chat-archive-desktop",
+  "version": "0.3.0",
+  "private": true,
+  "description": "本机优先的抖音私聊桌面档案工具",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "probe": "tsx src/probe-entry.ts",
+    "verify:history": "tsx src/probe/verify-entry.ts",
+    "verify:summary": "tsx src/probe/summary-entry.ts",
+    "research:check": "tsx src/probe/research-entry.ts",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-static.mjs",
+    "dev": "npm run build && electron .",
+    "package": "npm run build && electron-builder --config electron-builder.yml --win portable"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "playwright-core": "^1.63.0"
+  },
+  "devDependencies": {
+    "@types/jsdom": "30.0.0",
+    "@types/node": "^24.7.2",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "jsdom": "26.1.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "build": {
+    "appId": "local.douyin.chat.archive",
+    "productName": "抖音私聊档案",
+    "directories": {
+      "output": "../desktop-release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "npmRebuild": true,
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "douyin-chat-archive-${version}-portable.${ext}"
+    }
+  }
+}
