@@ -13,6 +13,7 @@
     "desktop:probe": "npm --prefix desktop run probe",
     "desktop:verify-history": "npm --prefix desktop run verify:history",
     "desktop:dev": "npm --prefix desktop run dev",
+    "desktop:build:dev": "npm --prefix desktop run build:dev",
     "desktop:build": "npm --prefix desktop run build",
     "desktop:package": "npm --prefix desktop run package"
   },

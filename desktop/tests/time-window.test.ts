@@ -9,7 +9,7 @@ import { collectVisibleMessageWindow } from '../src/probe/time-window.js';
 import { runVisibleTimeVerification } from '../src/probe/time-verifier.js';
 import { buildLiveVerificationReport } from '../src/probe/live-report.js';
 import { HistoryNetworkObserver, type CapturedInitExchange, type CapturedHistoryExchange } from '../src/probe/history-transport.js';
-import type { BrowserContext, Request, Response } from 'playwright-core';
+import type { BrowserContext, Frame, Page, Request, Response } from 'playwright-core';
 import type { HistoryVerificationOptions } from '../src/probe/history-verifier.js';
 import { CLIENT_TIME_MAPPING_SOURCE } from '../src/probe/time-mapping-source.js';
 
@@ -55,6 +55,13 @@ function domState(markup: string): PageState {
 }
 
 describe('passive initialization and rendered-window calibration', () => {
+  it('does not treat a conversation-like URL query parameter as the selected chat', () => {
+    const dom = new JSDOM('<body></body>', { url: 'https://www.douyin.com/chat?conversation_id=attacker-controlled', runScripts: 'outside-only' });
+    const state = dom.window.eval(PAGE_STATE_EVALUATOR) as PageState;
+    expect(state.selectedConversationIds).toEqual([]);
+    dom.window.close();
+  });
+
   it('decodes the observed init wrapper without losing 64-bit message IDs', () => {
     const decoded = decodeInitMessageResponse(response(initBody([messageBytes(1), messageBytes(2)])), request);
     expect(decoded.messages.map(item => item.platformMessageId)).toEqual(['8111000000000001001', '8111000000000001002']);
@@ -77,9 +84,12 @@ describe('passive initialization and rendered-window calibration', () => {
 
   it('observes normal init exchanges and reports bounded decode errors without keeping the request', async () => {
     const listeners = new Map<string, (value: unknown) => void>();
-    const context = { on: (event: string, listener: (value: unknown) => void) => listeners.set(event, listener) } as unknown as BrowserContext;
+    let page: Page;
+    const frame = { url: () => 'https://www.douyin.com/chat', page: () => page, isDetached: () => false } as unknown as Frame;
+    page = { url: frame.url, frames: () => [frame], mainFrame: () => frame, isClosed: () => false, on: () => {} } as unknown as Page;
+    const context = { pages: () => [page], on: (event: string, listener: (value: unknown) => void) => listeners.set(event, listener) } as unknown as BrowserContext;
     const observer = new HistoryNetworkObserver(context);
-    const normalRequest = { url: () => 'https://imapi.douyin.com/v1/message/get_message_by_init', method: () => 'POST', postDataBuffer: () => requestBytes, frame: () => undefined } as unknown as Request;
+    const normalRequest = { url: () => 'https://imapi.douyin.com/v1/message/get_message_by_init', method: () => 'POST', postDataBuffer: () => requestBytes, frame: () => frame } as unknown as Request;
     listeners.get('request')!(normalRequest);
     const normalResponse = { request: () => normalRequest, body: async () => response(initBody([messageBytes(1)])), status: () => 200 } as unknown as Response;
     listeners.get('response')!(normalResponse);
@@ -89,7 +99,7 @@ describe('passive initialization and rendered-window calibration', () => {
     listeners.get('request')!({ ...normalRequest, postDataBuffer: () => new Uint8Array([0x80]) });
     expect(observer.listInitExchanges()[1].decodeError).toBe('truncated-varint');
     expect(observer.listInitExchanges()[1].httpStatus).toBe(0);
-    const scriptRequest = { url: () => CLIENT_TIME_MAPPING_SOURCE.url, method: () => 'GET', frame: () => undefined } as unknown as Request;
+    const scriptRequest = { url: () => CLIENT_TIME_MAPPING_SOURCE.url, method: () => 'GET', frame: () => frame } as unknown as Request;
     listeners.get('request')!(scriptRequest);
     listeners.get('response')!({ request: () => scriptRequest, body: async () => new TextEncoder().encode('unverified source'), status: () => 200 });
     await observer.drainPendingResponses();

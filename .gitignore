@@ -4,3 +4,64 @@ release/
 coverage/
 artifacts/
 *.local.*
+desktop-release/
+
+# Local app data fallback can contain a browser profile, cookies, and chat archives
+.desktop-data/
+
+# Python bytecode and runtime logs
+__pycache__/
+*.py[cod]
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Local credentials and browser sessions
+.env
+.env.*
+!.env.example
+!.env.*.example
+.npmrc
+!.npmrc.example
+.netrc
+.pypirc
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+credentials.json
+credentials.*.json
+secrets.json
+secrets.*.json
+token.json
+tokens.json
+auth.json
+session.json
+cookies.json
+cookies.txt
+cookies
+cookies.sqlite*
+**/Cookies
+**/Local State
+**/Login Data*
+**/Web Data
+**/Network/Cookies
+
+# Local chat archives, exports, and packaged binaries
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.sqlite-*
+*.db
+*.db-*
+messages.json
+chat-export*.json
+douyin-chat-export*.json
+conversation-export*.json
+media-evidence.jsonl
+*.zip
+*.exe

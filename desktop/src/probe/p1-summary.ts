@@ -188,7 +188,7 @@ function renderSummaryMarkdown(summary: P1AcceptanceSummary) {
   return [
     '# P1 Acceptance Summary',
     '',
-    `生成时间：${summary.generatedAt}（Asia/Shanghai）`,
+    `生成时间：${summary.generatedAt}（UTC）`,
     `suite：\`${summary.suiteId}\`；总判定：**${summary.overallStatus}**；实现版本匹配：**${summary.implementationMatches ? '是' : '否'}**；P2 门：**${summary.p2GateOpen ? '开放' : '关闭'}**。`,
     '',
     '只有八项必验条件全部由本 suite 的完整真实分项报告判为 pass，且报告代码/协议/时间映射散列与当前实现一致时，才允许继续 P2～P5。合成测试和 legacy 报告不计入真实证据。',

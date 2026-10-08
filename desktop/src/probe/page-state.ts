@@ -78,10 +78,6 @@ export const PAGE_STATE_EVALUATOR = String.raw`(() => {
       addObjectCandidates(store.currentConversation);
     } catch {}
   }
-  try {
-    const query = new URLSearchParams(location.search);
-    for (const [key, value] of query) if (/conversation|conv/i.test(key)) addId(value);
-  } catch {}
   const selectedCandidates = [...document.querySelectorAll('[data-e2e*="conversation" i], [class*="conversation" i]')]
     .filter(element => {
       const className = typeof element.className === 'string' ? element.className : '';

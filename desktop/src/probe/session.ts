@@ -2,7 +2,19 @@ import { createInterface } from 'node:readline';
 import { chromium, type BrowserContext, type Page } from 'playwright-core';
 import { probeProfilePath, resolveBrowserExecutable } from './browser.js';
 
-export const TARGET_CHAT_URL = 'https://www.douyin.com/chat?isPopup=1';
+export const TARGET_CHAT_ORIGIN = 'https://www.douyin.com';
+export const TARGET_CHAT_PATH = '/chat';
+export const TARGET_CHAT_URL = `${TARGET_CHAT_ORIGIN}${TARGET_CHAT_PATH}?isPopup=1`;
+
+export function isTrustedChatUrl(raw: string): boolean {
+  try {
+    const url = new URL(raw);
+    return url.protocol === 'https:' && url.origin === TARGET_CHAT_ORIGIN && url.pathname === TARGET_CHAT_PATH &&
+      !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
 
 export interface BrowserProbeSession {
   context: BrowserContext;
@@ -71,4 +83,3 @@ export function installStopSignals(controller: AbortController): () => void {
 export function abortReason(signal: AbortSignal): Error {
   return signal.reason instanceof Error ? signal.reason : new Error('verification-cancelled');
 }
-

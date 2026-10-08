@@ -2,13 +2,30 @@
 
 版本 `0.3.0`。此目录与旧版 Chrome/Edge 扩展隔离，拥有独立依赖、TypeScript 配置、测试和发布目录。
 
+2026-10-08 已完成一次[整体架构复核](ARCHITECTURE-REVIEW-2026-10-08.md)，修正了首个新页面提交前丢失旧游标、历史终点非原子完成、补修进度过期、附件重试按钮、桌面 IPC 来源边界和历史请求回放边界。当前类型检查与测试通过；标准桌面构建因 P1 发布门关闭而失败关闭。隔离的 Windows x64 portable smoke 包已完成合成数据启动、preload/IPC 与 SQLite 检查，但不代表获得发布资格。当前构建尚未用产品入口读取用户旧档案或完成离线页面人工验收。
+
+## 当前桌面版状态（2026-10-08）
+
+P1 汇总当前判定为 `inconclusive`，实现版本不匹配，P2 门关闭；以当前 [P1 验收汇总](P1-ACCEPTANCE-SUMMARY.md) 为准。根目录检查通过（5 个测试文件、8 项），桌面类型检查通过，桌面测试通过（23 个文件、135 项）。标准桌面构建在 TypeScript 编译和静态文件复制后，于 `release-validation-p1-gate-closed` 失败关闭。另行生成的 portable smoke 包在 Electron 中通过合成数据启动、受限 preload/IPC、原生 SQLite 和 schema v5 完整性检查；这不替代 P1 真实证据，也不开放发布门。此前文档中的 P1 通过记录是 2026-10-06 的历史快照，不代表当前门状态。当前 portable 尚未用产品入口读取用户旧档案；离线页面搜索、引用、图片和语音仍需人工验收。档案完整度应依据产品报告判断，不能仅凭构建成功宣称完整。详见[架构复核](ARCHITECTURE-REVIEW-2026-10-08.md)。
+
+## 桌面版使用
+
+从项目根目录运行 `npm run desktop:dev` 会编译并启动本地模拟开发版，或启动已通过发布验证的交付版。开发版使用 `desktop/.desktop-data/mock-dev/` 中的隔离模拟数据；真实账号浏览器连接、采集、补修和联网自动化均被禁用，不能用于真实 P1 验收。交付版应用数据固定保存在 `%LOCALAPPDATA%\DouyinChatArchive\`：档案数据库为 `archive\archive.sqlite3`，附件为 `archive\media\`，导出默认为 `archive\exports\`，本机验收事件位于 `archive\acceptance\`。应用退出后这些文件保留；portable 放在不同目录不会因此换一套档案目录。
+
+1. 点“连接独立浏览器”，在新开的独立配置窗口登录抖音并选中已有的单人私聊。账号登录仅在浏览器中完成，不要复制 Cookie、密码或 Token。
+2. 回到桌面应用点“刷新会话”，选择会话和已有档案。勾选“从已保存游标恢复”后点“开始 / 继续”；如需稳定停在一个已提交页面后，可预先勾选“提交 1 页后自动停止”。手动“停止”则会在当前页提交边界处生效；两种方式都可从已保存游标续接。
+3. 要补修老档案，选择当前账号下的对应会话并点“修复此档案”。默认最多回读 6 页，只更新既有消息内容，不新增消息，也不移动正式采集检查点；可使用“取消补修”停止。
+4. 选中档案即可离线搜索正文或发送者、查看引用和媒体状态。点“导出 ZIP”并通过系统保存对话框选择位置。导出报告会分别说明历史范围、正文和附件完整度；`complete=false` 的档案仍可阅读，但不可描述成全量完整。
+
+离线档案中保存了正文不代表历史范围已经完整，附件签名有效也不代表浏览器已经解码或听到声音。图片在真实显示后记录解码事件；音频会分别记录 metadata、播放推进、ended 和错误，不会自动播放。发布前应在最终 portable 与实际导出页上人工确认媒体显示、播放和采集恢复。
+
 ## 当前门槛
 
-2026-10-04，Sol 已完成真实 P1：suite `p1-sol-final-20261004`，八项 pass，当前实现版本匹配，P2 门开放。见 [验收汇总](P1-ACCEPTANCE-SUMMARY.md) 及 [真实复检记录](P1-SOL-RECHECK.md)。后续由 Luna 按 [P2～P5 接续任务](../LUNA-P2-P5-HANDOFF.md) 实现正式采集、存储、档案界面及便携包；当前尚未交付可用 exe。
+截至 2026-10-08，P1 真实验收 suite `p1-sol-final-20261004` 的当前汇总为 `inconclusive`，实现版本不匹配，P2 门关闭；八项当前均缺少与源码散列匹配的完整真实报告。以 [验收汇总](P1-ACCEPTANCE-SUMMARY.md) 及 [真实复检记录](P1-SOL-RECHECK.md) 的当前内容为准。2026-10-06 的 P1 通过记录属于历史快照。
 
-P0 已建立桌面项目骨架和只读 P1 探针。探针只使用用户正常登录的独立 Chrome/Edge 配置目录，记录脱敏的请求路径、响应结构和页面 SDK 候选名称；不会复制日常浏览器配置，不保存 Cookie、认证头、聊天正文或原始网络响应。
+历史 P0/P1 探针使用独立 Chrome/Edge 配置目录，并将诊断报告限制为脱敏结构。正式应用仅在发布门资料有效时开放联网采集、旧档案补修和附件重试；离线阅读与导出在发布门无效时仍可用，并会显示原因。
 
-P1 未通过前，桌面界面不会连接模拟适配器，也不会把 DOM 滚动采集偷偷接入正式流程。
+正式采集走已冻结并通过 P1 的 IM 历史读取适配器，不会切换为 DOM 滚动采集或模拟适配器。
 
 ## 命令
 
@@ -27,6 +44,7 @@ npm --prefix desktop run verify:history -- --suite p1-closeout --task endpoint -
 npm --prefix desktop run verify:history -- --suite p1-closeout --task semantics --max-pages 20
 npm --prefix desktop run verify:summary -- --suite p1-closeout
 npm run desktop:dev
+npm run desktop:build:dev
 npm run desktop:build
 npm run desktop:package
 ```
@@ -54,7 +72,7 @@ npm --prefix desktop run verify:summary -- --suite p1-new-audit
 
 `verify:summary` 生成 [P1-ACCEPTANCE-SUMMARY.md](P1-ACCEPTANCE-SUMMARY.md) 和 JSON。分项报告即使自身 pass 也不会开放正式采集；八项 P1 全部有完整真实 pass，且代码/协议/时间版本与当前实现匹配，汇总的 `p2GateOpen` 才能为 `true`。
 
-汇总先排除版本已失效的证据，再选择当前版本报告；旧报告保留并列出排除原因。同一 suite 的有效通过项还必须关联到同一个账号指纹。本轮已冻结源码并重新执行完整真实任务，当前八项均与实现版本匹配。
+汇总先排除版本已失效的证据，再选择当前版本报告；旧报告保留并列出排除原因。同一 suite 的有效通过项还必须关联到同一个账号指纹。当前汇总尚无可用的版本匹配真实分项报告，不能继续 P2～P5 或宣称发布就绪。
 
 探针报告保存于 `%LOCALAPPDATA%\DouyinChatArchive\probe-reports`。报告只用于调查适配能力，不能单凭“观察到 JSON 请求”宣布历史分页、引用或消息类型已支持。
 

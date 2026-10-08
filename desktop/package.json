@@ -12,12 +12,14 @@
     "verify:history": "tsx src/probe/verify-entry.ts",
     "verify:summary": "tsx src/probe/summary-entry.ts",
     "research:check": "tsx src/probe/research-entry.ts",
-    "build": "tsc -p tsconfig.build.json && node scripts/copy-static.mjs",
-    "dev": "npm run build && electron .",
-    "package": "npm run build && electron-builder --config electron-builder.yml --win portable"
+    "build:dev": "tsc -p tsconfig.build.json && node scripts/copy-static.mjs && node scripts/build-mode.mjs dev",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-static.mjs && node scripts/build-release-validation.mjs",
+    "dev": "npm run build:dev && electron .",
+    "package": "npm run build && electron-builder --config electron-builder.yml --win portable --x64"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
+    "fflate": "^0.8.2",
     "playwright-core": "^1.63.0"
   },
   "devDependencies": {
@@ -29,24 +31,5 @@
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
-  },
-  "build": {
-    "appId": "local.douyin.chat.archive",
-    "productName": "抖音私聊档案",
-    "directories": {
-      "output": "../desktop-release"
-    },
-    "files": [
-      "dist/**/*",
-      "package.json"
-    ],
-    "asar": true,
-    "npmRebuild": true,
-    "win": {
-      "target": [
-        "portable"
-      ],
-      "artifactName": "douyin-chat-archive-${version}-portable.${ext}"
-    }
   }
 }

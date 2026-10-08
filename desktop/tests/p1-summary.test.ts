@@ -55,6 +55,7 @@ describe('current-version acceptance aggregation', () => {
     expect(missing.summary.items.find(item => item.key === 'three-pages-no-scroll')?.status).toBe('not-run');
     expect(missing.summary.ignoredEvidence.some(item => item.reportPath === old)).toBe(true);
     expect(missing.summary.p2GateOpen).toBe(false);
+    expect(await readFile(missing.markdownPath, 'utf8')).toContain(`生成时间：${missing.summary.generatedAt}（UTC）`);
     for (const task of ['chain', 'time', 'endpoint', 'recovery', 'semantics'] as const) await addReport(directory, task);
     const fresh = await buildP1AcceptanceSummary({ suiteId: 'unit-only', workspaceRoot: directory });
     expect(fresh.summary.overallStatus).toBe('pass');
