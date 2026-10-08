@@ -117,7 +117,7 @@
     </main>
     <script>
       const api = window.desktopArchive;
-      const state = { app: null, context: { account: null, conversations: [], archivedConversations: [], collector: { state: 'idle' }, repair: { running: false, lastResult: null }, exporting: false }, selectedId: null, selectedAccountId: null, offset: 0, busy: false, loadGeneration: 0, mediaSources: new Map(), loadedMessages: [], loadedAttachments: [], filterKind: '', filterContentStatus: '' };
+      const state = { app: null, context: { account: null, conversations: [], archivedConversations: [], collector: { state: 'idle' }, repair: { running: false, lastResult: null }, exporting: false }, selectedId: null, selectedAccountId: null, offset: 0, loadedOffset: 0, loadedQuery: '', busy: false, loadGeneration: 0, mediaSources: new Map(), loadedMessages: [], loadedAttachments: [], filterKind: '', filterContentStatus: '' };
       const $ = id => document.getElementById(id);
       const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       const isRunning = () => ['collecting'].includes(state.context.collector.state);
@@ -151,7 +151,9 @@
           return null;
         }
       }
-      function choose(accountId, conversationId) { state.selectedAccountId=accountId; state.selectedId=conversationId; state.offset=0; state.loadedMessages=[]; state.loadedAttachments=[]; $('filterCount').textContent='当前已加载消息：0 条'; $('messages').innerHTML='<div class="empty">正在加载当前会话消息…</div>'; $('search').value=''; render(); loadMessages(); }
+      function invalidateMessageTasks() { clearTimeout(window.__searchTimer); return ++state.loadGeneration; }
+      function pausePlayingMedia(root) { root.querySelectorAll('audio, video').forEach(media=>{if(!media.paused)media.pause();}); }
+      function choose(accountId, conversationId) { invalidateMessageTasks(); state.selectedAccountId=accountId; state.selectedId=conversationId; state.offset=0; state.loadedOffset=0; state.loadedQuery=''; state.loadedMessages=[]; state.loadedAttachments=[]; $('filterCount').textContent='当前已加载消息：0 条'; pausePlayingMedia($('messages')); $('messages').innerHTML='<div class="empty">正在加载当前会话消息…</div>'; $('search').value=''; render(); loadMessages(); }
       function renderConversations() {
         const items = state.context.conversations || [];
         $('conversations').innerHTML = items.length ? items.map(item => `<button class="conversation ${state.selectedId === item.conversationId && state.selectedAccountId===state.context.account?.accountId ? 'selected' : ''}" data-conversation="${esc(item.conversationId)}"><strong>${esc(item.title || '当前私聊')}</strong><small>浏览器中选定的私聊</small></button>`).join('') : '<div class="empty">在独立浏览器打开一个私聊后刷新。</div>';
@@ -195,6 +197,7 @@
           const accountId=state.selectedAccountId;
           const attachments=state.loadedAttachments;
           const rows=state.loadedMessages;
+          pausePlayingMedia($('messages'));
           $('messages').innerHTML = rows.length ? rows.map(message => {
             const sender=message.senderName || (message.senderId===accountId?'我':'对方');
             const media=attachments.filter(item=>item.messagePk===message.messagePk).map(item=>{ const source=state.mediaSources.get(item.id);const url=source?.url;const error=attachmentErrors[item.error]||'附件处理未完成';const retry=item.canRetry&&state.app?.acquisitionEnabled?`<button data-retry="${esc(item.id)}">重试附件</button>`:'';if(item.status!=='saved'||!url)return `<div class="attachment-row"><small>${item.status==='pending'?'附件正在保存':item.status==='unavailable'?'附件不可用':item.status==='saved'?'本机文件无法读取或校验':'附件未保存'}${item.error?`：${error}`:''}</small>${retry}</div>`;const label=esc(mediaEvidenceLabel(source));if(source.mime==='image/heic')return `<div class="attachment-row"><small>HEIC 原文件已保存；请导出 ZIP 后用支持 HEIC 的程序打开。</small></div>`;if(source.mime?.startsWith('image/'))return `<div class="attachment-row"><img data-media-image="${esc(item.id)}" data-file-version="${esc(source.fileVersion)}" loading="lazy" src="${esc(url)}" alt="聊天图片"><small data-media-status="${esc(item.id)}">${label}</small></div>`;if(source.mime?.startsWith('audio/'))return `<div class="attachment-row"><audio data-media-audio="${esc(item.id)}" data-file-version="${esc(source.fileVersion)}" controls preload="none" src="${esc(url)}"></audio><small data-media-status="${esc(item.id)}">${label}</small></div>`;return `<div class="attachment-row"><video controls preload="none" src="${esc(url)}"></video><small data-media-status="${esc(item.id)}">${label}</small></div>`; }).join('');
@@ -223,20 +226,27 @@
       }
       function applyMessageFilters() {
         const visible=new Set(state.loadedMessages.filter(message=>(!state.filterKind||message.kind===state.filterKind)&&(!state.filterContentStatus||message.contentStatus===state.filterContentStatus)).map(message=>message.messagePk));
-        $('messages').querySelectorAll('.message').forEach(row=>{row.hidden=!visible.has(row.dataset.messagePk);});
+        $('messages').querySelectorAll('.message').forEach(row=>{const hide=!visible.has(row.dataset.messagePk);if(hide&&!row.hidden)pausePlayingMedia(row);row.hidden=hide;});
         const empty=$('filterEmpty');
         if(empty)empty.hidden=visible.size!==0;
         $('filterCount').textContent=`当前已加载消息：筛选显示 ${visible.size} / ${state.loadedMessages.length} 条`;
       }
       async function jumpToReference(target) {
         if(!target)return;
+        let navigationGeneration=invalidateMessageTasks();
         let message=state.loadedMessages.find(item=>item.platformMessageId===target);
         if(!message) {
           $('search').value=target;
           state.offset=0;
-          const loaded=await loadMessages();
+          const pending=loadMessages();
+          navigationGeneration=state.loadGeneration;
+          const loaded=await pending;
+          if(navigationGeneration!==state.loadGeneration)return;
           if(!loaded){if(loaded===false)setStatus('引用消息读取失败，请稍后重试。',true);return;}
           message=state.loadedMessages.find(item=>item.platformMessageId===target);
+        } else {
+          $('search').value=state.loadedQuery;
+          state.offset=state.loadedOffset;
         }
         if(!message){setStatus('未找到引用消息，可能尚未保存。',true);return;}
         let changed=false;
@@ -251,25 +261,28 @@
       async function loadMessages() {
         const generation=++state.loadGeneration;
         const accountId = state.selectedAccountId;
-        if (!accountId || !state.selectedId) { state.loadedMessages=[]; state.loadedAttachments=[]; $('filterCount').textContent='当前已加载消息：0 条'; $('messages').innerHTML = '<div class="empty">选择会话后查看消息。</div>'; return false; }
+        if (!accountId || !state.selectedId) { state.loadedMessages=[]; state.loadedAttachments=[]; $('filterCount').textContent='当前已加载消息：0 条'; pausePlayingMedia($('messages')); $('messages').innerHTML = '<div class="empty">选择会话后查看消息。</div>'; return false; }
+        const query=$('search').value, offset=state.offset;
         try {
-          const [rows, allAttachments] = await Promise.all([api.getMessages({ accountId, conversationId: state.selectedId, query: $('search').value, limit: 500, offset:state.offset }), api.getAttachments({ accountId, conversationId: state.selectedId })]);
+          const [rows, allAttachments] = await Promise.all([api.getMessages({ accountId, conversationId: state.selectedId, query, limit: 500, offset }), api.getAttachments({ accountId, conversationId: state.selectedId })]);
           const attachments=allAttachments.filter(item=>item.assetState!=='superseded');
           const visible=new Set(rows.map(row=>row.messagePk));
           await Promise.all(attachments.filter(item=>visible.has(item.messagePk)).map(async item=>{if(item.status==='saved'){const source=await api.getMediaUrl({attachmentId:item.id});if(source)state.mediaSources.set(item.id,source);else state.mediaSources.delete(item.id);}else state.mediaSources.delete(item.id);}));
           if(generation!==state.loadGeneration)return null;
           state.loadedMessages=rows;
           state.loadedAttachments=attachments;
+          state.loadedQuery=query;
+          state.loadedOffset=offset;
           const saved = attachments.filter(item => item.status === 'saved').length;
           const pending=attachments.filter(item=>item.status==='pending').length, failed=attachments.filter(item=>item.status==='failed'||item.status==='unavailable').length;
           $('mediaStatus').textContent = attachments.length ? `附件：${saved}/${attachments.length} 已保存 · ${pending} 项处理中 · ${failed} 项失败或缺失；格式歧义会单独标明。` : '当前档案没有可保存附件。';
           renderLoadedMessages();
-          $('previous').disabled=state.offset===0; $('next').disabled=rows.length<500;
-          $('pageInfo').textContent=rows.length?`显示第 ${state.offset+1}～${state.offset+rows.length} 条`:'';
+          $('previous').disabled=offset===0; $('next').disabled=rows.length<500;
+          $('pageInfo').textContent=rows.length?`显示第 ${offset+1}～${offset+rows.length} 条`:'';
           return true;
-        } catch (error) { if(generation!==state.loadGeneration)return null; state.loadedMessages=[]; state.loadedAttachments=[]; $('filterCount').textContent='当前已加载消息：0 条'; $('messages').innerHTML = `<div class="empty">读取档案失败：${esc(error.message || error)}</div>`; return false; }
+        } catch (error) { if(generation!==state.loadGeneration)return null; state.loadedMessages=[]; state.loadedAttachments=[]; $('filterCount').textContent='当前已加载消息：0 条'; pausePlayingMedia($('messages')); $('messages').innerHTML = `<div class="empty">读取档案失败：${esc(error.message || error)}</div>`; return false; }
       }
-      async function refresh() { try { state.context = await api.refreshContext(); state.app = await api.getState(); const current=state.context.conversations[0]; if(current){state.selectedId=current.conversationId;state.selectedAccountId=state.context.account.accountId;state.offset=0;} render(); await loadMessages(); } catch (error) { setStatus(error.message || String(error), true); } }
+      async function refresh() { const generation=invalidateMessageTasks(); try { const context=await api.refreshContext(), app=await api.getState(); if(generation!==state.loadGeneration)return; state.context=context; state.app=app; const current=context.conversations[0]; if(current){state.selectedId=current.conversationId;state.selectedAccountId=context.account.accountId;state.offset=0;} render(); await loadMessages(); } catch (error) { if(generation===state.loadGeneration)setStatus(error.message || String(error), true); } }
       $('connect').addEventListener('click', async () => { state.busy=true;render();try { state.app = await api.connect(); state.context=await api.getContext(); } catch (error) { setStatus(error.message || String(error), true); } finally {state.busy=false;render();} });
       $('refresh').addEventListener('click', refresh);
       $('start').addEventListener('click', async () => { const stopAfterPages=$('stopAfterNextPage').checked?1:undefined;$('stopAfterNextPage').checked=false;try { state.context.collector = await api.startCapture({ conversationId: state.selectedId, resume: $('resume').checked, maxPages: Number($('maxPages').value) || 200, stopAfterPages }); render(); } catch (error) { if(stopAfterPages)$('stopAfterNextPage').checked=true;setStatus(error.message || String(error), true); } });
@@ -280,11 +293,12 @@
       $('kindFilter').addEventListener('change', event => { state.filterKind=event.target.value; applyMessageFilters(); });
       $('contentStatusFilter').addEventListener('change', event => { state.filterContentStatus=event.target.value; applyMessageFilters(); });
       $('clearFilters').addEventListener('click', () => { state.filterKind=''; state.filterContentStatus=''; $('kindFilter').value=''; $('contentStatusFilter').value=''; applyMessageFilters(); });
-      $('search').addEventListener('input', () => { state.offset=0;clearTimeout(window.__searchTimer); window.__searchTimer = setTimeout(loadMessages, 220); });
-      $('previous').addEventListener('click',()=>{state.offset=Math.max(0,state.offset-500);loadMessages();});
-      $('next').addEventListener('click',()=>{state.offset+=500;loadMessages();});
-      api.onEvent(async context => { state.context = context; state.app=await api.getState();render(); if (state.selectedId) loadMessages(); });
-      Promise.all([api.getState(), api.getContext()]).then(([appState, context]) => { state.app = appState; state.context=context; render(); loadMessages(); }).catch(error => setStatus(error.message || String(error), true));
+      $('search').addEventListener('input', () => { state.offset=0;const generation=invalidateMessageTasks();window.__searchTimer=setTimeout(()=>{if(generation===state.loadGeneration)loadMessages();},220); });
+      $('previous').addEventListener('click',()=>{invalidateMessageTasks();state.offset=Math.max(0,state.offset-500);loadMessages();});
+      $('next').addEventListener('click',()=>{invalidateMessageTasks();state.offset+=500;loadMessages();});
+      api.onEvent(async context => { const generation=invalidateMessageTasks(); const app=await api.getState(); if(generation!==state.loadGeneration)return; state.context=context; state.app=app;render(); if(state.selectedId)loadMessages(); });
+      const initialGeneration=state.loadGeneration;
+      Promise.all([api.getState(), api.getContext()]).then(([appState, context]) => { if(initialGeneration!==state.loadGeneration)return; state.app = appState; state.context=context; render(); loadMessages(); }).catch(error => {if(initialGeneration===state.loadGeneration)setStatus(error.message || String(error), true);});
     </script>
   </body>
 </html>

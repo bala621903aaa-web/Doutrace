@@ -18,7 +18,7 @@ let recordMediaEvidence: ReturnType<typeof vi.fn>;
 let scrollIntoView: ReturnType<typeof vi.fn>;
 
 beforeEach(async () => {
-  getMessages = vi.fn(async (_input: { query?: string; limit?: number; offset?: number }) => messages);
+  getMessages = vi.fn(async (_input: { conversationId?: string; query?: string; limit?: number; offset?: number }) => messages);
   recordMediaEvidence = vi.fn(async () => ({ evidence: {} }));
   dom = new JSDOM(html, {
     runScripts: 'dangerously',
@@ -27,7 +27,10 @@ beforeEach(async () => {
         getState: async () => ({ acquisitionEnabled: false, connected: false, browserStatus: '离线' }),
         getContext: async () => ({
           account: { accountId: 'account', source: 'test' }, conversations: [],
-          archivedConversations: [{ accountId: 'account', conversationId: 'conversation', title: 'Mock 档案', messageCount: 5000 }],
+          archivedConversations: [
+            { accountId: 'account', conversationId: 'conversation', title: 'Mock 档案', messageCount: 5000 },
+            { accountId: 'account', conversationId: 'other', title: '另一个 Mock 档案', messageCount: 1 }
+          ],
           collector: { state: 'idle' }, repair: { running: false, lastResult: null }, exporting: false
         }),
         getMessages,
@@ -43,7 +46,13 @@ beforeEach(async () => {
   await vi.waitFor(() => expect(visibleIds()).toHaveLength(messages.length));
 });
 
-afterEach(() => dom.window.close());
+afterEach(() => { vi.useRealTimers(); dom.window.close(); });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => { resolve = done; });
+  return { promise, resolve };
+}
 
 function visibleIds() {
   return [...dom.window.document.querySelectorAll<HTMLElement>('#messages .message')].filter(row => !row.hidden).map(row => row.dataset.platformId);
@@ -192,4 +201,111 @@ it('preserves a visible audio node and its evidence listeners while changing fil
   await vi.waitFor(() => expect(recordMediaEvidence).toHaveBeenCalledWith(expect.objectContaining({
     attachmentId: 'voice-attachment', fileVersion: 'mock-version', event: { type: 'audio-playback', advancedSeconds: 1 }
   })));
+});
+
+it('pauses audio and video only when their row becomes hidden and never resumes them on reset', () => {
+  const audio = dom.window.document.querySelector<HTMLAudioElement>('[data-media-audio="voice-attachment"]')!;
+  const video = dom.window.document.createElement('video');
+  dom.window.document.querySelector('[data-platform-id="3"] .media')!.append(video);
+  let paused = false;
+  let videoPaused = false;
+  Object.defineProperty(audio, 'paused', { configurable: true, get: () => paused });
+  Object.defineProperty(video, 'paused', { configurable: true, get: () => videoPaused });
+  const pause = vi.fn(() => { paused = true; });
+  const pauseVideo = vi.fn(() => { videoPaused = true; });
+  const play = vi.fn();
+  audio.pause = pause;
+  audio.play = play;
+  video.pause = pauseVideo;
+
+  changeFilter('contentStatusFilter', 'unknown');
+  changeFilter('kindFilter', 'voice');
+  expect(dom.window.document.querySelector('[data-media-audio="voice-attachment"]')).toBe(audio);
+  expect(pause).not.toHaveBeenCalled();
+  expect(pauseVideo).not.toHaveBeenCalled();
+  expect(paused).toBe(false);
+
+  changeFilter('kindFilter', 'image');
+  expect(dom.window.document.querySelector<HTMLElement>('[data-platform-id="3"]')?.hidden).toBe(true);
+  expect(pause).toHaveBeenCalledTimes(1);
+  expect(pauseVideo).toHaveBeenCalledTimes(1);
+  expect(paused).toBe(true);
+  changeFilter('contentStatusFilter', 'parsed');
+  expect(pause).toHaveBeenCalledTimes(1);
+  expect(pauseVideo).toHaveBeenCalledTimes(1);
+
+  dom.window.document.getElementById('clearFilters')!.click();
+  expect(dom.window.document.querySelector('[data-media-audio="voice-attachment"]')).toBe(audio);
+  expect(paused).toBe(true);
+  expect(videoPaused).toBe(true);
+  expect(play).not.toHaveBeenCalled();
+});
+
+it('ignores a pending page response after navigating to a quoted message on the displayed page', async () => {
+  const pendingPage = deferred<typeof messages>();
+  getMessages.mockImplementationOnce(() => pendingPage.promise);
+  const next = dom.window.document.getElementById('next') as HTMLButtonElement;
+  next.disabled = false; // Simulate a full first page while keeping the fixture small.
+  next.click();
+  expect(getMessages).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 500 }));
+
+  clickReference('2', '1');
+  expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
+  pendingPage.resolve(messages);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
+  expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
+  expect(dom.window.document.getElementById('pageInfo')?.textContent).toContain('第 1～5 条');
+  expect(getMessages).toHaveBeenCalledTimes(2);
+});
+
+it('cancels an untriggered search debounce when navigating to a loaded reference', async () => {
+  vi.useFakeTimers();
+  const search = dom.window.document.getElementById('search') as HTMLInputElement;
+  search.value = '延迟搜索';
+  search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  clickReference('2', '1');
+  await vi.advanceTimersByTimeAsync(300);
+  expect(search.value).toBe('');
+  expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
+  expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
+  expect(getMessages).toHaveBeenCalledTimes(1);
+});
+
+it('does not highlight a new conversation with a stale quoted-target response', async () => {
+  const oldTarget = deferred<typeof messages>();
+  const newRow = { ...messages[0], messagePk: 'new-conversation', platformMessageId: '404' };
+  getMessages.mockImplementationOnce(() => oldTarget.promise).mockImplementationOnce(async () => [newRow]);
+  clickReference('5', '404');
+  expect(getMessages).toHaveBeenLastCalledWith(expect.objectContaining({ conversationId: 'conversation', query: '404' }));
+  dom.window.document.querySelector<HTMLButtonElement>('[data-archive="other"]')!.click();
+  await vi.waitFor(() => expect(visibleIds()).toEqual(['404']));
+  oldTarget.resolve([{ ...messages[0], messagePk: 'old-conversation', platformMessageId: '404' }]);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(dom.window.document.querySelector('[data-platform-id="404"]')?.classList.contains('target-message')).toBe(false);
+  expect((dom.window.document.getElementById('search') as HTMLInputElement).value).toBe('');
+  expect(scrollIntoView).not.toHaveBeenCalled();
+});
+
+it('keeps ordinary search, pagination, and quoted navigation working', async () => {
+  const nextRow = { ...messages[0], messagePk: 'next-page', platformMessageId: '501' };
+  getMessages.mockImplementation(async input => input.query === '普通' ? [messages[0]] : input.offset === 500 ? [nextRow] : messages);
+  const search = dom.window.document.getElementById('search') as HTMLInputElement;
+  search.value = '普通';
+  search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  await vi.waitFor(() => expect(visibleIds()).toEqual(['1']));
+  search.value = '';
+  search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  await vi.waitFor(() => expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']));
+
+  const next = dom.window.document.getElementById('next') as HTMLButtonElement;
+  next.disabled = false;
+  next.click();
+  await vi.waitFor(() => expect(visibleIds()).toEqual(['501']));
+  expect(dom.window.document.getElementById('pageInfo')?.textContent).toContain('第 501～501 条');
+  (dom.window.document.getElementById('previous') as HTMLButtonElement).click();
+  await vi.waitFor(() => expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']));
+  clickReference('2', '1');
+  expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
+  expect(scrollIntoView).toHaveBeenCalledTimes(1);
 });
