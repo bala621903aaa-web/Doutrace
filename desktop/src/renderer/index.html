@@ -3,63 +3,86 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>抖音私聊档案</title>
+    <meta name="color-scheme" content="light" />
+    <title>抖忆 · DouTrace</title>
     <link rel="stylesheet" href="./renderer.css" />
   </head>
   <body>
-    <main>
-      <header class="topbar">
-        <div>
-          <h1>抖音私聊档案</h1>
-          <p class="muted">本机优先保存；浏览器使用独立配置，登录和选会话在独立窗口完成。</p>
-          <p class="status" id="status">正在初始化…</p>
-        </div>
-        <div class="toolbar">
-          <button class="primary" id="connect">连接独立浏览器</button>
-          <button id="refresh">刷新会话</button>
+    <div id="app-shell" class="app-shell">
+      <header id="app-titlebar" class="app-titlebar" aria-label="应用标题栏">
+        <div class="app-titlebar__safe-area">
+          <img class="app-titlebar__logo" src="./icons/doutrace-mark.svg" alt="" />
+          <span class="app-titlebar__name">抖忆 · DouTrace</span>
         </div>
       </header>
-      <div class="notice" id="notice">先在浏览器选定一条私聊，再刷新会话并开始保存。消息和附件保存在本机；停止后可以继续。</div>
-      <section class="layout">
-        <aside class="stack">
-          <section class="card">
-            <h2>当前会话</h2>
-            <div id="conversations" class="stack"><div class="empty">连接浏览器后刷新。</div></div>
-          </section>
-          <section class="card">
-            <h2>已保存的档案</h2>
-            <div id="archives" class="stack"><div class="empty">尚无本机档案。</div></div>
-          </section>
-          <section class="card capture">
-            <h2>采集控制</h2>
-            <div class="muted" id="selected">尚未选择会话</div>
-            <div class="capture-row"><label><input type="checkbox" id="resume" checked> 从已保存游标恢复</label></div>
-            <div class="capture-row"><label>本次最多页数 <input id="maxPages" class="page-limit" type="number" min="1" max="10000" value="200"></label></div>
-            <div class="capture-row"><label><input type="checkbox" id="stopAfterNextPage"> 提交 1 页后自动停止（无需抢点停止）</label></div>
-            <div class="capture-row"><button class="primary" id="start">开始 / 继续</button><button class="danger" id="stop">停止</button></div>
-            <div id="captureStatus" class="muted">空闲</div><div class="progress" id="progress" hidden><span></span></div>
-            <hr class="capture-divider">
-            <h2 class="repair-title">修复旧档案</h2>
-            <p class="muted">只回读已有消息，默认最多 6 页；不会新增消息，也不会移动正式采集检查点。</p>
-            <div class="capture-row"><button id="repair">修复此档案</button><button class="danger" id="cancelRepair">取消补修</button></div>
-            <div id="repairStatus" class="muted">选择当前账号下的档案，并在独立浏览器选中同一私聊后使用。</div>
-          </section>
-        </aside>
-        <section class="card">
-          <div class="capture-row archive-toolbar"><h2 id="archiveTitle">离线档案</h2><div class="capture-row"><input class="search" id="search" placeholder="搜索正文或发送者"><button id="export">导出 ZIP</button></div></div>
-          <div id="mediaStatus" class="muted media-status"></div>
-          <div class="message-filters" role="group" aria-label="当前已加载消息筛选">
-            <label for="kindFilter">消息类型<select id="kindFilter"><option value="">全部类型</option><option value="text">文字</option><option value="image">图片</option><option value="voice">语音</option><option value="video-file">视频</option><option value="video-share">视频分享</option><option value="emoji">表情</option><option value="system">系统消息</option><option value="unknown">未识别消息</option></select></label>
-            <label for="contentStatusFilter">内容解析状态<select id="contentStatusFilter"><option value="">全部状态</option><option value="parsed">parsed · 已解析</option><option value="partial">partial · 部分解析</option><option value="unknown">unknown · 未解析</option><option value="legacy-missing">旧记录待补修</option></select></label>
-            <button id="clearFilters" type="button">清除筛选</button>
-            <div class="muted filter-summary" id="filterCount" role="status" aria-live="polite">当前已加载消息：0 条</div>
-            <p class="muted filter-summary">仅筛选当前已加载的消息（每页最多 500 条），不是整个聊天档案。</p>
+
+      <div class="app-workspace">
+        <nav id="primary-navigation" class="navigation-rail" aria-label="主导航">
+          <div class="navigation-rail__primary">
+            <button class="navigation-rail__item" type="button" data-route="archive" aria-label="聊天档案" title="聊天档案" aria-current="page">
+              <img src="./icons/message-square.svg" alt="" />
+            </button>
+            <button class="navigation-rail__item" type="button" data-route="analysis" aria-label="聊天分析" title="聊天分析">
+              <img src="./icons/chart-no-axes-column.svg" alt="" />
+            </button>
+            <button class="navigation-rail__item" type="button" data-route="media" aria-label="媒体资源" title="媒体资源">
+              <img src="./icons/images.svg" alt="" />
+            </button>
+            <button class="navigation-rail__item" type="button" data-route="reminders" aria-label="火花提醒" title="火花提醒">
+              <img src="./icons/flame.svg" alt="" />
+            </button>
           </div>
-          <div id="messages"><div class="empty">选择已有档案或完成一次采集后查看。</div></div>
-          <div class="pagination"><button id="previous" disabled>上一页</button><span id="pageInfo" class="muted"></span><button id="next" disabled>下一页</button></div>
-        </section>
-      </section>
-    </main>
+          <div class="navigation-rail__footer">
+            <button class="navigation-rail__item" type="button" data-route="settings" aria-label="设置" title="设置">
+              <img src="./icons/settings.svg" alt="" />
+            </button>
+          </div>
+        </nav>
+
+        <main id="app-view" class="app-view">
+          <section id="chat-archive-page" class="app-module chat-archive-module" data-module="archive" aria-label="聊天档案"></section>
+
+          <section id="chat-analysis-page" class="app-module analysis-module" data-module="analysis" aria-labelledby="analysis-module-title" hidden>
+            <header class="module-heading">
+              <p class="module-heading__eyebrow">按已归档内容查看</p>
+              <h1 id="analysis-module-title">聊天分析</h1>
+              <p>从真实归档消息出发；当前尚未接入分析结果。</p>
+            </header>
+            <div class="analysis-tablist" role="tablist" aria-label="聊天分析标签">
+              <button id="analysis-tab-overview" class="analysis-tab" type="button" role="tab" data-analysis-tab="overview" aria-controls="analysis-tab-panel" aria-selected="true" tabindex="0">总览</button>
+              <button id="analysis-tab-interaction" class="analysis-tab" type="button" role="tab" data-analysis-tab="interaction" aria-controls="analysis-tab-panel" aria-selected="false" tabindex="-1">互动分析</button>
+              <button id="analysis-tab-journey" class="analysis-tab" type="button" role="tab" data-analysis-tab="journey" aria-controls="analysis-tab-panel" aria-selected="false" tabindex="-1">聊天旅程</button>
+              <button id="analysis-tab-ai" class="analysis-tab" type="button" role="tab" data-analysis-tab="ai" aria-controls="analysis-tab-panel" aria-selected="false" tabindex="-1">AI 洞察</button>
+            </div>
+            <section id="analysis-tab-panel" class="analysis-panel" role="tabpanel" tabindex="0" aria-labelledby="analysis-tab-overview">
+              <h2 id="analysis-tab-title">总览</h2>
+              <p id="analysis-tab-empty" class="module-empty" role="status">总览尚未接入真实归档统计。</p>
+            </section>
+          </section>
+
+          <section id="media-page" class="app-module placeholder-module" data-module="media" aria-labelledby="media-title" hidden>
+            <div class="module-placeholder">
+              <h1 id="media-title">媒体资源</h1>
+              <p role="status">媒体资源管理尚未提供。已保存的图片、语音和视频仍可在聊天档案中查看。</p>
+            </div>
+          </section>
+
+          <section id="reminders-page" class="app-module placeholder-module" data-module="reminders" aria-labelledby="reminders-title" hidden>
+            <div class="module-placeholder">
+              <h1 id="reminders-title">火花提醒</h1>
+              <p role="status">火花提醒能力尚未提供；当前不会生成或展示提醒。</p>
+            </div>
+          </section>
+
+          <section id="settings-page" class="app-module placeholder-module" data-module="settings" aria-labelledby="settings-title" hidden>
+            <div class="module-placeholder">
+              <h1 id="settings-title">设置</h1>
+              <p role="status">设置页面尚未提供。</p>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
     <script src="./renderer.js"></script>
   </body>
 </html>

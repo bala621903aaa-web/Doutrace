@@ -106,7 +106,13 @@ function createWindow() {
     height: 820,
     minWidth: 980,
     minHeight: 650,
-    title: '抖音私聊档案',
+    title: '抖忆 · DouTrace',
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#faf9f6',
+      symbolColor: '#5f554a',
+      height: 38
+    },
     webPreferences: {
       preload: join(currentDirectory, 'preload.cjs'),
       contextIsolation: true,
