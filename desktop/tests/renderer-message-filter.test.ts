@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { closeRendererFixture, loadRenderer, rendererFiles, rendererPathFromResourceUrl } from './renderer-test-dom.js';
 
-const html = await readFile(fileURLToPath(new URL('../src/renderer/index.html', import.meta.url)), 'utf8');
 const messages = [
   { messagePk: 'text-parsed', platformMessageId: '1', senderId: 'sender', sentAtMs: 1_700_000_000_000, kind: 'text', contentStatus: 'parsed', text: '普通文字' },
   { messagePk: 'image-partial', platformMessageId: '2', senderId: 'sender', sentAtMs: 1_700_000_000_001, kind: 'image', contentStatus: 'partial', text: '图片说明', replyToPlatformMessageId: '1', replySnapshot: { status: 'available', text: '普通文字' } },
@@ -16,14 +16,13 @@ let dom: JSDOM;
 let getMessages: ReturnType<typeof vi.fn>;
 let recordMediaEvidence: ReturnType<typeof vi.fn>;
 let scrollIntoView: ReturnType<typeof vi.fn>;
+let resourceErrors: string[];
 
 beforeEach(async () => {
   getMessages = vi.fn(async (_input: { conversationId?: string; query?: string; limit?: number; offset?: number }) => messages);
   recordMediaEvidence = vi.fn(async () => ({ evidence: {} }));
-  dom = new JSDOM(html, {
-    runScripts: 'dangerously',
-    beforeParse(window) {
-      Object.assign(window, { CSS: { escape: (value: string) => value }, desktopArchive: {
+  const loaded = await loadRenderer(window => {
+    Object.assign(window, { CSS: { escape: (value: string) => value }, desktopArchive: {
         getState: async () => ({ acquisitionEnabled: false, connected: false, browserStatus: '离线' }),
         getContext: async () => ({
           account: { accountId: 'account', source: 'test' }, conversations: [],
@@ -38,15 +37,17 @@ beforeEach(async () => {
         getMediaUrl: async () => ({ url: 'file:///mock.wav', fileVersion: 'mock-version', mime: 'audio/wav', family: 'audio', evidence: {} }),
         recordMediaEvidence,
         onEvent: () => () => {}
-      } });
-    }
+    } });
   });
+  dom = loaded.dom;
+  resourceErrors = loaded.resourceErrors;
   scrollIntoView = vi.fn();
   dom.window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
   await vi.waitFor(() => expect(visibleIds()).toHaveLength(messages.length));
 });
 
 afterEach(() => { vi.useRealTimers(); dom.window.close(); });
+afterAll(closeRendererFixture);
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -69,6 +70,37 @@ function clickReference(sourceId: string, targetId: string) {
   expect(button).not.toBeNull();
   button!.click();
 }
+
+it('loads the built HTML, JavaScript, and stylesheet from local disk resources', async () => {
+  const html = await readFile(rendererFiles.htmlPath, 'utf8');
+  const javascript = await readFile(rendererFiles.javascriptPath, 'utf8');
+  const stylesheet = await readFile(rendererFiles.stylesheetPath, 'utf8');
+  const document = dom.window.document;
+  const script = document.querySelector<HTMLScriptElement>('script[src]');
+  const link = document.querySelector<HTMLLinkElement>('link[rel="stylesheet"][href]');
+
+  expect(script?.getAttribute('src')).toBe('./renderer.js');
+  expect(link?.getAttribute('href')).toBe('./renderer.css');
+  expect(new URL(script!.getAttribute('src')!, pathToFileURL(rendererFiles.htmlPath)).href).toBe(pathToFileURL(rendererFiles.javascriptPath).href);
+  expect(new URL(link!.getAttribute('href')!, pathToFileURL(rendererFiles.htmlPath)).href).toBe(pathToFileURL(rendererFiles.stylesheetPath).href);
+  expect(await readFile(rendererPathFromResourceUrl(script!.src))).toBeTruthy();
+  expect(await readFile(rendererPathFromResourceUrl(link!.href))).toBeTruthy();
+  expect(resourceErrors).toEqual([]);
+  expect(document.styleSheets).toHaveLength(1);
+  expect((link!.sheet as CSSStyleSheet).cssRules.length).toBeGreaterThan(0);
+  expect(dom.window.getComputedStyle(document.body).marginTop).toBe('0px');
+  expect(getMessages).toHaveBeenCalledTimes(1);
+
+  for (const reference of [...document.querySelectorAll<HTMLScriptElement | HTMLLinkElement>('script[src], link[href]')]) {
+    const localPath = reference instanceof dom.window.HTMLScriptElement
+      ? reference.getAttribute('src')!
+      : reference.getAttribute('href')!;
+    expect(new URL(localPath, pathToFileURL(rendererFiles.htmlPath)).protocol).toBe('file:');
+  }
+  expect(html + stylesheet).not.toMatch(/https?:\/\//i);
+  expect(stylesheet).not.toMatch(/@import\s|url\([^)]*https?:\/\//i);
+  expect(javascript).not.toMatch(/\bfetch\s*\(|\bXMLHttpRequest\b|\bWebSocket\b|https?:\/\//i);
+});
 
 it('filters only loaded messages by supported type without another API request', () => {
   expect([...dom.window.document.querySelectorAll('#kindFilter option')].map(option => option.getAttribute('value')))

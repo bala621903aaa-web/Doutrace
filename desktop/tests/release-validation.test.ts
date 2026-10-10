@@ -23,6 +23,8 @@ async function fixture() {
   await writeFile(join(dist, 'main.js'), 'main-build');
   await writeFile(join(dist, 'preload.cjs'), 'preload-build');
   await writeFile(join(dist, 'renderer', 'index.html'), '<main>offline</main>');
+  await writeFile(join(dist, 'renderer', 'renderer.js'), 'renderer-build');
+  await writeFile(join(dist, 'renderer', 'renderer.css'), 'renderer-style-build');
   await writeFile(join(dist, 'core', 'attachment.js'), 'attachment-build');
   const files = await collectReleaseArtifactDigests(dist);
   const document: ReleaseValidationDocument = {
@@ -41,6 +43,20 @@ describe('release validation gate', () => {
   it('accepts matching P1 evidence and hashes for the current built files', async () => {
     const current = await fixture();
     await expect(validateReleaseValidation(current.dist, expected)).resolves.toMatchObject({ valid: true, acquisitionEnabled: true, offlineEnabled: true, reason: 'release-validation-pass' });
+  });
+
+  it('requires both generated renderer resources in the release artifact manifest', async () => {
+    const current = await fixture();
+    const files = { ...current.document.artifacts.files };
+    delete files['renderer/renderer.css'];
+    const document = {
+      ...current.document,
+      artifacts: { ...current.document.artifacts, files, fingerprint: releaseArtifactFingerprint(files) }
+    };
+    await writeFile(join(current.dist, 'release-validation.json'), JSON.stringify(document));
+    await expect(validateReleaseValidation(current.dist, expected)).resolves.toMatchObject({
+      valid: false, acquisitionEnabled: false, reason: 'release-artifact-required-file-missing'
+    });
   });
 
   it('keeps offline reading enabled and closes acquisition when metadata is missing or a built artifact changes', async () => {

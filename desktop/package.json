@@ -12,8 +12,8 @@
     "verify:history": "tsx src/probe/verify-entry.ts",
     "verify:summary": "tsx src/probe/summary-entry.ts",
     "research:check": "tsx src/probe/research-entry.ts",
-    "build:dev": "tsc -p tsconfig.build.json && node scripts/copy-static.mjs && node scripts/build-mode.mjs dev",
-    "build": "tsc -p tsconfig.build.json && node scripts/copy-static.mjs && node scripts/build-release-validation.mjs",
+    "build:dev": "tsc -p tsconfig.build.json && node scripts/copy-static.mjs && node scripts/build-renderer.mjs && node scripts/build-mode.mjs dev",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-static.mjs && node scripts/build-renderer.mjs && node scripts/build-release-validation.mjs",
     "dev": "npm run build:dev && electron .",
     "package": "npm run build && electron-builder --config electron-builder.yml --win portable --x64"
   },

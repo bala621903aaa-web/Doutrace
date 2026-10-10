@@ -25,18 +25,19 @@ describe('desktop IPC contract wiring', () => {
   });
 
   it('wires the deterministic stop-after-page control through the capture IPC contract', async () => {
-    const [api, preload, main, renderer] = await Promise.all([
+    const [api, preload, main, rendererHtml, rendererJavascript] = await Promise.all([
       readFile(new URL('../src/core/desktop-api.ts', import.meta.url), 'utf8'),
       readFile(new URL('../src/preload.cjs', import.meta.url), 'utf8'),
       readFile(new URL('../src/main.ts', import.meta.url), 'utf8'),
-      readFile(new URL('../src/renderer/index.html', import.meta.url), 'utf8')
+      readFile(new URL('../src/renderer/index.html', import.meta.url), 'utf8'),
+      readFile(new URL('../src/renderer/renderer.js', import.meta.url), 'utf8')
     ]);
     expect(api).toContain('stopAfterPages?: number');
     expect(preload).toContain('startCapture:');
     expect(preload).toContain("'archive-start-capture'");
     expect(main).toContain('stopAfterPages?: number');
     expect(main).toContain('单次自动停止仅支持提交下一页后停止。');
-    expect(renderer).toContain('id="stopAfterNextPage"');
-    expect(renderer).toContain("$('stopAfterNextPage').checked?1:undefined");
+    expect(rendererHtml).toContain('id="stopAfterNextPage"');
+    expect(rendererJavascript).toContain("$('stopAfterNextPage').checked?1:undefined");
   });
 });
