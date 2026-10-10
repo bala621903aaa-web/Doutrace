@@ -1,0 +1,183 @@
+      const api = window.desktopArchive;
+      const state = { app: null, context: { account: null, conversations: [], archivedConversations: [], collector: { state: 'idle' }, repair: { running: false, lastResult: null }, exporting: false }, selectedId: null, selectedAccountId: null, offset: 0, loadedOffset: 0, loadedQuery: '', busy: false, loadGeneration: 0, mediaSources: new Map(), loadedMessages: [], loadedAttachments: [], filterKind: '', filterContentStatus: '' };
+      const $ = id => document.getElementById(id);
+      const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const isRunning = () => ['collecting'].includes(state.context.collector.state);
+      const stateLabels = {idle:'空闲',ready:'就绪',collecting:'正在保存',complete:'历史消息已保存',partial:'部分保存',stopped:'已停止',interrupted:'上次中断',error:'采集失败','auth-required':'需要登录','conversation-changed':'浏览器会话已切换'};
+      const reasonLabels = {history_end:'已读到历史终点',page_limit:'已达本次页数上限',user_stop:'用户停止',missing_has_more:'未能确认历史终点',stalled:'分页停止推进',conversation_changed:'会话已切换'};
+      const kindLabels = {text:'文字',image:'图片',voice:'语音','video-file':'视频','video-share':'视频分享',emoji:'表情',system:'系统消息',unknown:'未识别消息'};
+      const contentLabels = {parsed:'内容已解析',partial:'部分解析',unknown:'内容未解析','legacy-missing':'旧记录待补修'};
+      const attachmentErrors = {'media-authentication-failed':'解密认证失败','media-key-invalid':'解密密钥格式不正确','media-format-unrecognized':'无法识别文件格式','media-role-mismatch':'实际格式与消息类别不符','attachment-http-403':'资源拒绝访问或链接已过期','attachment-http-404':'平台资源已不存在','attachment-download-failed':'下载失败，可重试','attachment-cancelled':'本次下载已取消','resource-source-missing':'未取得可用资源地址','local-file-unavailable':'本机媒体文件缺失或损坏','saved-media-missing':'本机媒体文件缺失','saved-media-unreadable':'本机媒体文件无法读取','downloader-unavailable':'连接浏览器后可继续保存'};
+      function setStatus(text, error = false) { $('status').textContent = text; $('status').style.color = error ? '#ad2020' : '#52606d'; }
+      function mediaEvidenceLabel(source) {
+        const evidence=source?.evidence||{};
+        if(source?.family==='image') return evidence.imageDecoded?`浏览器已解码 ${evidence.imageDecoded.naturalWidth}×${evidence.imageDecoded.naturalHeight}`:evidence.imageError?`浏览器解码失败（${evidence.imageError.errorCode}）`:'签名已校验；浏览器图片解码待验';
+        if(source?.family==='audio') return evidence.audioEnded?'播放已结束':evidence.audioPlayback?`播放已推进 ${evidence.audioPlayback.advancedSeconds.toFixed(2)} 秒`:evidence.audioMetadata?`元数据已载入（${evidence.audioMetadata.durationSeconds.toFixed(2)} 秒）；播放待验`:evidence.audioError?`浏览器音频错误（${evidence.audioError.errorCode}）`:'签名已校验；播放待验';
+        if(source?.family==='ambiguous-container') return 'MP4 容器角色待确认；此结果不算语音播放验证';
+        return `${source?.actualFormat||source?.mime||'媒体'}；浏览器播放待验`;
+      }
+      async function recordMediaEvidence(attachmentId,fileVersion,event) {
+        const source=state.mediaSources.get(attachmentId);
+        if(!source||source.fileVersion!==fileVersion)return null;
+        try {
+          const result=await api.recordMediaEvidence({attachmentId,fileVersion,event});
+          if(state.mediaSources.get(attachmentId)?.fileVersion!==fileVersion)return null;
+          source.evidence=result.evidence;
+          const label=document.querySelector(`[data-media-status="${CSS.escape(attachmentId)}"]`);
+          if(label)label.textContent=mediaEvidenceLabel(source);
+          return result;
+        } catch(error) {
+          if(error?.message==='media-file-version-changed')return null;
+          const label=document.querySelector(`[data-media-status="${CSS.escape(attachmentId)}"]`);
+          if(label)label.textContent=`验收记录未写入：${error?.message||'本机文件状态已变化'}`;
+          return null;
+        }
+      }
+      function invalidateMessageTasks() { clearTimeout(window.__searchTimer); return ++state.loadGeneration; }
+      function pausePlayingMedia(root) { root.querySelectorAll('audio, video').forEach(media=>{if(!media.paused)media.pause();}); }
+      function choose(accountId, conversationId) { invalidateMessageTasks(); state.selectedAccountId=accountId; state.selectedId=conversationId; state.offset=0; state.loadedOffset=0; state.loadedQuery=''; state.loadedMessages=[]; state.loadedAttachments=[]; $('filterCount').textContent='当前已加载消息：0 条'; pausePlayingMedia($('messages')); $('messages').innerHTML='<div class="empty">正在加载当前会话消息…</div>'; $('search').value=''; render(); loadMessages(); }
+      function renderConversations() {
+        const items = state.context.conversations || [];
+        $('conversations').innerHTML = items.length ? items.map(item => `<button class="conversation ${state.selectedId === item.conversationId && state.selectedAccountId===state.context.account?.accountId ? 'selected' : ''}" data-conversation="${esc(item.conversationId)}"><strong>${esc(item.title || '当前私聊')}</strong><small>浏览器中选定的私聊</small></button>`).join('') : '<div class="empty">在独立浏览器打开一个私聊后刷新。</div>';
+        document.querySelectorAll('[data-conversation]').forEach(button => button.addEventListener('click', () => choose(state.context.account?.accountId,button.dataset.conversation)));
+        const selected = items.find(item => item.conversationId === state.selectedId);
+        $('selected').textContent = selected ? `已选：${selected.title || '当前私聊'}` : '请先选择当前浏览器中的会话';
+      }
+      function renderArchives() {
+        const items = (state.context.archivedConversations || []).filter(item=>item.messageCount>0);
+        if (!state.selectedId && items[0]) { state.selectedId=items[0].conversationId; state.selectedAccountId=items[0].accountId; }
+        $('archives').innerHTML = items.length ? items.map(item=>`<button class="conversation ${state.selectedId===item.conversationId&&state.selectedAccountId===item.accountId?'selected':''}" data-archive="${esc(item.conversationId)}" data-account="${esc(item.accountId)}"><strong>${esc(item.title || '私聊档案')}</strong><small>${item.messageCount} 条消息</small></button>`).join('') : '<div class="empty">尚无本机档案。</div>';
+        document.querySelectorAll('[data-archive]').forEach(button=>button.addEventListener('click',()=>choose(button.dataset.account,button.dataset.archive)));
+        $('archiveTitle').textContent = items.length ? `离线档案（${items.length} 个会话）` : '离线档案';
+      }
+      function renderCollector() {
+        const c = state.context.collector || {};
+        const repair = state.context.repair || { running: false, lastResult: null };
+        $('captureStatus').textContent = `${stateLabels[c.state] || '空闲'} · ${c.pages || 0} 页 · ${c.messages || 0} 条${c.reason ? ` · ${reasonLabels[c.reason] || '采集出现错误'}` : ''}`;
+        $('progress').hidden = !isRunning();
+        $('start').disabled = state.busy || state.context.exporting || repair.running || isRunning() || !state.app?.acquisitionEnabled || !state.app?.connected || state.selectedAccountId!==state.context.account?.accountId || !state.context.conversations.some(item=>item.conversationId===state.selectedId);
+        $('stop').disabled = !isRunning();
+        $('connect').disabled = state.busy || state.context.exporting || repair.running || isRunning() || !state.app?.acquisitionEnabled;
+        $('refresh').disabled = state.busy || state.context.exporting || repair.running || isRunning() || !state.app?.connected;
+        $('export').disabled = state.busy || state.context.exporting || repair.running || isRunning() || !state.selectedId;
+        const archiveExists=(state.context.archivedConversations||[]).some(item=>item.accountId===state.selectedAccountId&&item.conversationId===state.selectedId&&item.messageCount>0);
+        const matchingCurrent=state.selectedAccountId===state.context.account?.accountId&&state.context.conversations.some(item=>item.conversationId===state.selectedId);
+        $('repair').disabled=state.busy||state.context.exporting||repair.running||isRunning()||!state.app?.acquisitionEnabled||!state.app?.connected||!archiveExists||!matchingCurrent;
+        $('cancelRepair').disabled=!repair.running;
+        const last=repair.lastResult;
+        const repairReasons={complete:'目标已回读完', 'history-end':'已到服务端当前历史终点', 'page-limit':'达到 6 页上限', cancelled:'已取消，可继续', stalled:'分页游标停止推进', 'identity-changed':'账号或会话已切换'};
+        $('repairStatus').textContent=repair.running?'正在按既有消息 ID 回读；本次最多 6 页。':last?`上次结果：改善 ${last.repaired} 项，找到 ${last.matched} 项，${last.remaining} 项尚未回读；仍不完整 ${last.stillIncomplete} 条。消息数 ${last.beforeMessageCount} → ${last.messageCount}；检查点${last.checkpointUnchanged?'未变':'有变化'}，采集运行记录${last.runsUnchanged?'未变':'有变化'}；${repairReasons[last.stopReason]||last.stopReason}。`:'选择当前账号下的档案，并在独立浏览器选中同一私聊后使用。';
+      }
+      function render() {
+        renderArchives(); renderConversations(); renderCollector();
+        const account = state.context.account;
+        const appStatus = state.app?.browserStatus || '尚未连接独立浏览器';
+        if(state.app?.message){$('notice').textContent=state.app.message;$('notice').style.background=state.app.acquisitionEnabled?'#fff7e6':'#fff0f0';$('notice').style.color=state.app.acquisitionEnabled?'#7a4b00':'#8a2020';}
+        setStatus(`${appStatus}${account ? ' · 已识别登录账号' : ''}`);
+      }
+      function renderLoadedMessages() {
+          const accountId=state.selectedAccountId;
+          const attachments=state.loadedAttachments;
+          const rows=state.loadedMessages;
+          pausePlayingMedia($('messages'));
+          $('messages').innerHTML = rows.length ? rows.map(message => {
+            const sender=message.senderName || (message.senderId===accountId?'我':'对方');
+            const media=attachments.filter(item=>item.messagePk===message.messagePk).map(item=>{ const source=state.mediaSources.get(item.id);const url=source?.url;const error=attachmentErrors[item.error]||'附件处理未完成';const retry=item.canRetry&&state.app?.acquisitionEnabled?`<button data-retry="${esc(item.id)}">重试附件</button>`:'';if(item.status!=='saved'||!url)return `<div class="attachment-row"><small>${item.status==='pending'?'附件正在保存':item.status==='unavailable'?'附件不可用':item.status==='saved'?'本机文件无法读取或校验':'附件未保存'}${item.error?`：${error}`:''}</small>${retry}</div>`;const label=esc(mediaEvidenceLabel(source));if(source.mime==='image/heic')return `<div class="attachment-row"><small>HEIC 原文件已保存；请导出 ZIP 后用支持 HEIC 的程序打开。</small></div>`;if(source.mime?.startsWith('image/'))return `<div class="attachment-row"><img data-media-image="${esc(item.id)}" data-file-version="${esc(source.fileVersion)}" loading="lazy" src="${esc(url)}" alt="聊天图片"><small data-media-status="${esc(item.id)}">${label}</small></div>`;if(source.mime?.startsWith('audio/'))return `<div class="attachment-row"><audio data-media-audio="${esc(item.id)}" data-file-version="${esc(source.fileVersion)}" controls preload="none" src="${esc(url)}"></audio><small data-media-status="${esc(item.id)}">${label}</small></div>`;return `<div class="attachment-row"><video controls preload="none" src="${esc(url)}"></video><small data-media-status="${esc(item.id)}">${label}</small></div>`; }).join('');
+            const reference=message.replySnapshot?`<button class="reference" ${message.replySnapshot.status==='available'?`data-reference="${esc(message.replyToPlatformMessageId)}"`: 'disabled'}>引用：${esc(message.replySnapshot.text || '目标消息尚未采集')}</button>`:'';
+            return `<article class="message" data-message-pk="${esc(message.messagePk)}" data-platform-id="${esc(message.platformMessageId)}"><div class="message-head"><b>${esc(sender)}</b><span>${message.sentAtMs === null ? '时间未知' : esc(new Date(message.sentAtMs).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }))}</span></div><div class="message-body">${esc(message.text || `[${kindLabels[message.kind] || '消息'}]`)}</div><small class="message-badge">${esc(kindLabels[message.kind]||'消息')} · ${esc(contentLabels[message.contentStatus]||'内容状态未知')}</small><div class="media">${media}</div>${reference}</article>`;
+          }).join('') + '<div class="empty" id="filterEmpty" hidden>当前已加载消息中没有符合筛选条件的结果，请调整或清除筛选。</div>' : '<div class="empty">当前页没有消息。</div>';
+          document.querySelectorAll('[data-media-image]').forEach(image=>{
+            const attachmentId=image.dataset.mediaImage, fileVersion=image.dataset.fileVersion;
+            const submitLoaded=()=>{if(!image.isConnected||image.naturalWidth<1||image.naturalHeight<1||image.dataset.submittedLoadVersion===fileVersion||state.mediaSources.get(attachmentId)?.fileVersion!==fileVersion)return;image.dataset.submittedLoadVersion=fileVersion;void recordMediaEvidence(attachmentId,fileVersion,{type:'image-decoded',naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight});};
+            image.addEventListener('load',submitLoaded,{once:true});
+            image.addEventListener('error',()=>{if(image.isConnected&&image.dataset.submittedErrorVersion!==fileVersion&&state.mediaSources.get(attachmentId)?.fileVersion===fileVersion){image.dataset.submittedErrorVersion=fileVersion;void recordMediaEvidence(attachmentId,fileVersion,{type:'image-error',errorCode:4});}},{once:true});
+            if(image.complete)queueMicrotask(submitLoaded);
+          });
+          document.querySelectorAll('[data-media-audio]').forEach(audio=>{
+            const attachmentId=audio.dataset.mediaAudio, fileVersion=audio.dataset.fileVersion;
+            let playStartedAt=null, playbackWrite=null, metadataWritten=false, errorWritten=false;
+            audio.addEventListener('loadedmetadata',()=>{if(metadataWritten||!Number.isFinite(audio.duration)||audio.duration<=0)return;metadataWritten=true;void recordMediaEvidence(attachmentId,fileVersion,{type:'audio-metadata',durationSeconds:audio.duration});},{once:true});
+            audio.addEventListener('play',()=>{playStartedAt=audio.currentTime;});
+            audio.addEventListener('timeupdate',()=>{if(playbackWrite||playStartedAt===null)return;const advancedSeconds=audio.currentTime-playStartedAt;if(advancedSeconds>=0.25)playbackWrite=recordMediaEvidence(attachmentId,fileVersion,{type:'audio-playback',advancedSeconds});});
+            audio.addEventListener('ended',async()=>{if(playbackWrite)await playbackWrite;if(state.mediaSources.get(attachmentId)?.evidence?.audioPlayback)await recordMediaEvidence(attachmentId,fileVersion,{type:'audio-ended'});});
+            audio.addEventListener('error',()=>{const errorCode=audio.error?.code;if(!errorWritten&&Number.isSafeInteger(errorCode)&&errorCode>=1&&errorCode<=4){errorWritten=true;void recordMediaEvidence(attachmentId,fileVersion,{type:'audio-error',errorCode});}},{once:true});
+          });
+          document.querySelectorAll('[data-reference]').forEach(button=>button.addEventListener('click',()=>{ void jumpToReference(button.dataset.reference); }));
+          document.querySelectorAll('[data-retry]').forEach(button=>button.addEventListener('click',async()=>{state.busy=true;render();try{const id=button.dataset.retry;if(id){state.mediaSources.delete(id);await api.retryAttachment({attachmentId:id});await loadMessages();}}catch(error){setStatus(error.message||String(error),true);}finally{state.busy=false;render();}}));
+          applyMessageFilters();
+      }
+      function applyMessageFilters() {
+        const visible=new Set(state.loadedMessages.filter(message=>(!state.filterKind||message.kind===state.filterKind)&&(!state.filterContentStatus||message.contentStatus===state.filterContentStatus)).map(message=>message.messagePk));
+        $('messages').querySelectorAll('.message').forEach(row=>{const hide=!visible.has(row.dataset.messagePk);if(hide&&!row.hidden)pausePlayingMedia(row);row.hidden=hide;});
+        const empty=$('filterEmpty');
+        if(empty)empty.hidden=visible.size!==0;
+        $('filterCount').textContent=`当前已加载消息：筛选显示 ${visible.size} / ${state.loadedMessages.length} 条`;
+      }
+      async function jumpToReference(target) {
+        if(!target)return;
+        let navigationGeneration=invalidateMessageTasks();
+        let message=state.loadedMessages.find(item=>item.platformMessageId===target);
+        if(!message) {
+          $('search').value=target;
+          state.offset=0;
+          const pending=loadMessages();
+          navigationGeneration=state.loadGeneration;
+          const loaded=await pending;
+          if(navigationGeneration!==state.loadGeneration)return;
+          if(!loaded){if(loaded===false)setStatus('引用消息读取失败，请稍后重试。',true);return;}
+          message=state.loadedMessages.find(item=>item.platformMessageId===target);
+        } else {
+          $('search').value=state.loadedQuery;
+          state.offset=state.loadedOffset;
+        }
+        if(!message){setStatus('未找到引用消息，可能尚未保存。',true);return;}
+        let changed=false;
+        if(state.filterKind&&state.filterKind!==message.kind){state.filterKind='';$('kindFilter').value='';changed=true;}
+        if(state.filterContentStatus&&state.filterContentStatus!==message.contentStatus){state.filterContentStatus='';$('contentStatusFilter').value='';changed=true;}
+        if(changed)applyMessageFilters();
+        const row=[...$('messages').querySelectorAll('[data-message-pk]')].find(item=>item.dataset.messagePk===message.messagePk);
+        if(!row||row.hidden){setStatus('引用消息暂时无法显示，请重试。',true);return;}
+        row.scrollIntoView?.({block:'center'});
+        row.classList.add('target-message');
+      }
+      async function loadMessages() {
+        const generation=++state.loadGeneration;
+        const accountId = state.selectedAccountId;
+        if (!accountId || !state.selectedId) { state.loadedMessages=[]; state.loadedAttachments=[]; $('filterCount').textContent='当前已加载消息：0 条'; pausePlayingMedia($('messages')); $('messages').innerHTML = '<div class="empty">选择会话后查看消息。</div>'; return false; }
+        const query=$('search').value, offset=state.offset;
+        try {
+          const [rows, allAttachments] = await Promise.all([api.getMessages({ accountId, conversationId: state.selectedId, query, limit: 500, offset }), api.getAttachments({ accountId, conversationId: state.selectedId })]);
+          const attachments=allAttachments.filter(item=>item.assetState!=='superseded');
+          const visible=new Set(rows.map(row=>row.messagePk));
+          await Promise.all(attachments.filter(item=>visible.has(item.messagePk)).map(async item=>{if(item.status==='saved'){const source=await api.getMediaUrl({attachmentId:item.id});if(source)state.mediaSources.set(item.id,source);else state.mediaSources.delete(item.id);}else state.mediaSources.delete(item.id);}));
+          if(generation!==state.loadGeneration)return null;
+          state.loadedMessages=rows;
+          state.loadedAttachments=attachments;
+          state.loadedQuery=query;
+          state.loadedOffset=offset;
+          const saved = attachments.filter(item => item.status === 'saved').length;
+          const pending=attachments.filter(item=>item.status==='pending').length, failed=attachments.filter(item=>item.status==='failed'||item.status==='unavailable').length;
+          $('mediaStatus').textContent = attachments.length ? `附件：${saved}/${attachments.length} 已保存 · ${pending} 项处理中 · ${failed} 项失败或缺失；格式歧义会单独标明。` : '当前档案没有可保存附件。';
+          renderLoadedMessages();
+          $('previous').disabled=offset===0; $('next').disabled=rows.length<500;
+          $('pageInfo').textContent=rows.length?`显示第 ${offset+1}～${offset+rows.length} 条`:'';
+          return true;
+        } catch (error) { if(generation!==state.loadGeneration)return null; state.loadedMessages=[]; state.loadedAttachments=[]; $('filterCount').textContent='当前已加载消息：0 条'; pausePlayingMedia($('messages')); $('messages').innerHTML = `<div class="empty">读取档案失败：${esc(error.message || error)}</div>`; return false; }
+      }
+      async function refresh() { const generation=invalidateMessageTasks(); try { const context=await api.refreshContext(), app=await api.getState(); if(generation!==state.loadGeneration)return; state.context=context; state.app=app; const current=context.conversations[0]; if(current){state.selectedId=current.conversationId;state.selectedAccountId=context.account.accountId;state.offset=0;} render(); await loadMessages(); } catch (error) { if(generation===state.loadGeneration)setStatus(error.message || String(error), true); } }
+      $('connect').addEventListener('click', async () => { state.busy=true;render();try { state.app = await api.connect(); state.context=await api.getContext(); } catch (error) { setStatus(error.message || String(error), true); } finally {state.busy=false;render();} });
+      $('refresh').addEventListener('click', refresh);
+      $('start').addEventListener('click', async () => { const stopAfterPages=$('stopAfterNextPage').checked?1:undefined;$('stopAfterNextPage').checked=false;try { state.context.collector = await api.startCapture({ conversationId: state.selectedId, resume: $('resume').checked, maxPages: Number($('maxPages').value) || 200, stopAfterPages }); render(); } catch (error) { if(stopAfterPages)$('stopAfterNextPage').checked=true;setStatus(error.message || String(error), true); } });
+      $('stop').addEventListener('click', async () => { try { state.context.collector = await api.stopCapture(); render(); } catch (error) { setStatus(error.message || String(error), true); } });
+      $('repair').addEventListener('click', async () => { const accountId=state.selectedAccountId,conversationId=state.selectedId;if(!accountId||!conversationId)return;state.busy=true;render();try { const result=await api.repairConversation({accountId,conversationId,maxPages:6});state.context.repair={running:false,lastResult:result};setStatus(`补修结束：找到 ${result.matched} 项，改善 ${result.repaired} 项，仍有 ${result.remaining} 项未回读。`);await loadMessages(); } catch(error) { setStatus(error.message||String(error),true); } finally {state.busy=false;render();} });
+      $('cancelRepair').addEventListener('click', async () => { try { await api.cancelRepair(); } catch(error) { setStatus(error.message||String(error),true); } });
+      $('export').addEventListener('click', async () => { const accountId=state.selectedAccountId; if (!accountId || !state.selectedId) return setStatus('请先选择已有档案。', true); state.busy=true;render();try { const result = await api.exportConversation({ accountId, conversationId: state.selectedId }); state.busy=false;render();if(result.cancelled)return;setStatus(`导出完成：${result.outputPath}（${result.report.messageCount} 条消息，必要媒体缺失 ${result.report.requiredAssetMissingCount} 项；${result.historyComplete?'历史范围到达已验证终点':'部分历史范围'}；${result.complete?'内容与必要媒体完整':'部分档案，详见导出报告'}）`); } catch (error) { state.busy=false;render();setStatus(error.message || String(error), true); } });
+      $('kindFilter').addEventListener('change', event => { state.filterKind=event.target.value; applyMessageFilters(); });
+      $('contentStatusFilter').addEventListener('change', event => { state.filterContentStatus=event.target.value; applyMessageFilters(); });
+      $('clearFilters').addEventListener('click', () => { state.filterKind=''; state.filterContentStatus=''; $('kindFilter').value=''; $('contentStatusFilter').value=''; applyMessageFilters(); });
+      $('search').addEventListener('input', () => { state.offset=0;const generation=invalidateMessageTasks();window.__searchTimer=setTimeout(()=>{if(generation===state.loadGeneration)loadMessages();},220); });
+      $('previous').addEventListener('click',()=>{invalidateMessageTasks();state.offset=Math.max(0,state.offset-500);loadMessages();});
+      $('next').addEventListener('click',()=>{invalidateMessageTasks();state.offset+=500;loadMessages();});
+      api.onEvent(async context => { const generation=invalidateMessageTasks(); const app=await api.getState(); if(generation!==state.loadGeneration)return; state.context=context; state.app=app;render(); if(state.selectedId)loadMessages(); });
+      const initialGeneration=state.loadGeneration;
+      Promise.all([api.getState(), api.getContext()]).then(([appState, context]) => { if(initialGeneration!==state.loadGeneration)return; state.app = appState; state.context=context; render(); loadMessages(); }).catch(error => {if(initialGeneration===state.loadGeneration)setStatus(error.message || String(error), true);});

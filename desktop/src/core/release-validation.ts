@@ -94,7 +94,9 @@ export async function validateReleaseValidation(distRoot: string, expected: Rele
     const files = document.artifacts?.files;
     if (document.artifacts?.algorithm !== 'sha256' || !files || typeof files !== 'object' || Array.isArray(files) ||
         document.artifacts.fingerprint !== releaseArtifactFingerprint(files)) return invalid('release-artifact-manifest-invalid');
-    for (const required of ['main.js', 'preload.cjs', 'renderer/index.html']) if (!Object.hasOwn(files, required)) return invalid('release-artifact-required-file-missing');
+    for (const required of ['main.js', 'preload.cjs', 'renderer/index.html', 'renderer/renderer.js', 'renderer/renderer.css']) {
+      if (!Object.hasOwn(files, required)) return invalid('release-artifact-required-file-missing');
+    }
     for (const [path, expectedHash] of Object.entries(files)) {
       if (!validRelativePath(path) || path === 'release-validation.json' || !/^[a-f0-9]{64}$/.test(expectedHash)) return invalid('release-artifact-manifest-invalid');
       const absolute = resolve(root, path);

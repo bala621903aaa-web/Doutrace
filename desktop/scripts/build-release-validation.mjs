@@ -28,7 +28,9 @@ if (protocolVersions.size !== 1 || !protocolVersions.has(PROTOCOL_MAPPING_VERSIO
 }
 await markReleaseBuild(distRoot);
 const files = await collectReleaseArtifactDigests(distRoot);
-for (const required of ['main.js', 'preload.cjs', 'renderer/index.html']) if (!files[required]) throw new Error(`release-validation-required-artifact-missing:${required}`);
+for (const required of ['main.js', 'preload.cjs', 'renderer/index.html', 'renderer/renderer.js', 'renderer/renderer.css']) {
+  if (!files[required]) throw new Error(`release-validation-required-artifact-missing:${required}`);
+}
 const sourceSummary = await readFile(resolve(desktopRoot, 'P1-ACCEPTANCE-SUMMARY.json'));
 const document = {
   schemaVersion: 1,

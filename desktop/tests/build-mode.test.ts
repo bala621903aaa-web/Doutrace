@@ -34,22 +34,26 @@ describe('development and release build separation', () => {
   });
 
   it('keeps package scripts and main process guards on their intended paths', async () => {
-    const [pkg, rootPkg, releaseScript, main, renderer] = await Promise.all([
+    const [pkg, rootPkg, releaseScript, main, rendererHtml, rendererJavascript] = await Promise.all([
       readFile(new URL('../package.json', import.meta.url), 'utf8').then(JSON.parse),
       readFile(new URL('../../package.json', import.meta.url), 'utf8').then(JSON.parse),
       readFile(new URL('../scripts/build-release-validation.mjs', import.meta.url), 'utf8'),
       readFile(new URL('../src/main.ts', import.meta.url), 'utf8'),
-      readFile(new URL('../src/renderer/index.html', import.meta.url), 'utf8')
+      readFile(new URL('../src/renderer/index.html', import.meta.url), 'utf8'),
+      readFile(new URL('../src/renderer/renderer.js', import.meta.url), 'utf8')
     ]);
     expect(pkg.scripts.dev).toContain('npm run build:dev');
     expect(pkg.scripts['build:dev']).not.toContain('build-release-validation');
     expect(pkg.scripts.build).toContain('build-release-validation.mjs');
+    expect(pkg.scripts.build).toContain('node scripts/build-renderer.mjs');
+    expect(pkg.scripts['build:dev']).toContain('node scripts/build-renderer.mjs');
     expect(pkg.scripts.package).toContain('npm run build');
     expect(rootPkg.scripts['desktop:build:dev']).toContain('build:dev');
     expect(releaseScript).toContain("summary.overallStatus !== 'pass'");
     expect(releaseScript).toContain('await markReleaseBuild(distRoot)');
     expect(main).toContain("join(dirname(currentDirectory), '.desktop-data', 'mock-dev')");
     expect(main).toContain('if (!releaseValidation.acquisitionEnabled || developmentMode) throw new Error(appState().message)');
-    expect(renderer).toContain("$('connect').disabled = state.busy || state.context.exporting || repair.running || isRunning() || !state.app?.acquisitionEnabled");
+    expect(rendererHtml).toContain('<script src="./renderer.js"></script>');
+    expect(rendererJavascript).toContain("$('connect').disabled = state.busy || state.context.exporting || repair.running || isRunning() || !state.app?.acquisitionEnabled");
   });
 });
