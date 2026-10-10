@@ -38,6 +38,6 @@ describe('desktop IPC contract wiring', () => {
     expect(main).toContain('stopAfterPages?: number');
     expect(main).toContain('单次自动停止仅支持提交下一页后停止。');
     expect(rendererHtml).toContain('id="stopAfterNextPage"');
-    expect(rendererJavascript).toContain("$('stopAfterNextPage').checked?1:undefined");
+    expect(rendererJavascript).toContain("$('stopAfterNextPage').checked ? 1 : undefined");
   });
 });
