@@ -40,9 +40,11 @@ export function createChatArchiveController({ api, state, $, esc, setStatus, ren
 
   function renderConversations() {
     const items = state.context.conversations || [];
-    $('conversations').innerHTML = items.length
-      ? items.map(item => `<button class="conversation ${state.selectedId === item.conversationId && state.selectedAccountId === state.context.account?.accountId ? 'selected' : ''}" data-conversation="${esc(item.conversationId)}"><strong>${esc(item.title || '当前私聊')}</strong><small>浏览器中选定的私聊</small></button>`).join('')
-      : '<div class="empty">在独立浏览器打开一个私聊后刷新。</div>';
+    const query = $('conversationSearch').value.trim().toLocaleLowerCase();
+    const matching = items.filter(item => (item.title || '当前私聊').toLocaleLowerCase().includes(query));
+    $('conversations').innerHTML = matching.length
+      ? matching.map(item => conversationButton(item, 'conversation', state.context.account?.accountId, '浏览器中选定的私聊')).join('')
+      : `<div class="empty">${items.length ? '没有匹配的当前会话。' : '在独立浏览器打开一个私聊后刷新。'}</div>`;
     document.querySelectorAll('[data-conversation]').forEach(button => {
       button.addEventListener('click', () => selectConversation(state.context.account?.accountId, button.dataset.conversation));
     });
@@ -56,13 +58,36 @@ export function createChatArchiveController({ api, state, $, esc, setStatus, ren
       state.selectedId = items[0].conversationId;
       state.selectedAccountId = items[0].accountId;
     }
-    $('archives').innerHTML = items.length
-      ? items.map(item => `<button class="conversation ${state.selectedId === item.conversationId && state.selectedAccountId === item.accountId ? 'selected' : ''}" data-archive="${esc(item.conversationId)}" data-account="${esc(item.accountId)}"><strong>${esc(item.title || '私聊档案')}</strong><small>${item.messageCount} 条消息</small></button>`).join('')
-      : '<div class="empty">尚无本机档案。</div>';
+    const query = $('conversationSearch').value.trim().toLocaleLowerCase();
+    const matching = items.filter(item => (item.title || '私聊档案').toLocaleLowerCase().includes(query));
+    $('archives').innerHTML = matching.length
+      ? matching.map(item => conversationButton(item, 'archive', item.accountId, `已保存 ${item.messageCount.toLocaleString('zh-CN')} 条消息`)).join('')
+      : `<div class="empty">${items.length ? '没有匹配的档案。' : '尚无本机档案。'}</div>`;
     document.querySelectorAll('[data-archive]').forEach(button => {
       button.addEventListener('click', () => selectConversation(button.dataset.account, button.dataset.archive));
     });
-    $('archiveTitle').textContent = items.length ? `离线档案（${items.length} 个会话）` : '离线档案';
+    $('archiveCount').textContent = String(items.length);
+    const selected = items.find(item => item.conversationId === state.selectedId && item.accountId === state.selectedAccountId);
+    const current = (state.context.conversations || []).find(item =>
+      item.conversationId === state.selectedId && state.selectedAccountId === state.context.account?.accountId);
+    const title = selected?.title || current?.title || (selected ? '私聊档案' : current ? '当前私聊' : '选择一份档案');
+    $('archiveTitle').textContent = title;
+    $('archiveAvatar').textContent = Array.from(title)[0] || '档';
+    $('archiveMeta').textContent = selected
+      ? `已保存 ${selected.messageCount.toLocaleString('zh-CN')} 条消息 · 本机只读档案`
+      : current ? '浏览器当前会话 · 尚无已保存消息' : '本机只读聊天记录';
+  }
+
+  function conversationButton(item, source, accountId, description) {
+    const selected = state.selectedId === item.conversationId && state.selectedAccountId === accountId;
+    const title = item.title || (source === 'archive' ? '私聊档案' : '当前私聊');
+    const attributes = source === 'archive'
+      ? `data-archive="${esc(item.conversationId)}" data-account="${esc(accountId)}"`
+      : `data-conversation="${esc(item.conversationId)}"`;
+    const latestDate = new Date(item.latestSentAtMs);
+    const latest = Number.isFinite(item.latestSentAtMs) && Number.isFinite(latestDate.getTime())
+      ? latestDate.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', month: '2-digit', day: '2-digit' }) : '';
+    return `<button class="conversation ${selected ? 'selected' : ''}" ${attributes} ${selected ? 'aria-current="true"' : ''}><span class="archive-avatar" aria-hidden="true">${esc(Array.from(title)[0] || '档')}</span><span class="conversation__copy"><span class="conversation__title"><strong>${esc(title)}</strong>${latest ? `<time>${esc(latest)}</time>` : ''}</span><small>${esc(description)}</small></span></button>`;
   }
 
   function renderLists() {
@@ -261,6 +286,7 @@ export function createChatArchiveController({ api, state, $, esc, setStatus, ren
   $('contentStatusFilter').addEventListener('change', event => setFilters({ contentStatus: event.target.value }));
   $('clearFilters').addEventListener('click', () => setFilters({ kind: '', contentStatus: '' }));
   $('search').addEventListener('input', () => searchMessages());
+  $('conversationSearch').addEventListener('input', () => renderLists());
   $('previous').addEventListener('click', () => {
     cancelPending();
     state.offset = Math.max(0, state.offset - 500);
