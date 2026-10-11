@@ -71,6 +71,37 @@ function clickReference(sourceId: string, targetId: string) {
   button!.click();
 }
 
+it('uses reliable sender IDs for bubble sides and keeps missing identity neutral', async () => {
+  getMessages.mockResolvedValueOnce([
+    messages[0],
+    { ...messages[0], messagePk: 'own', platformMessageId: 'own', senderId: 'account', senderName: '本机账号' },
+    { ...messages[0], messagePk: 'unknown-sender', platformMessageId: 'unknown-sender', senderId: null, senderName: null, sentAtMs: Number.MAX_SAFE_INTEGER }
+  ]);
+  const search = dom.window.document.getElementById('search') as HTMLInputElement;
+  search.value = '身份';
+  search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  await vi.waitFor(() => expect(visibleIds()).toHaveLength(3));
+  const relation = (id: string) => dom.window.document.querySelector<HTMLElement>(`[data-platform-id="${id}"]`)?.dataset.senderRelation;
+  expect(relation('1')).toBe('incoming');
+  expect(relation('own')).toBe('outgoing');
+  expect(relation('unknown-sender')).toBe('neutral');
+  expect(dom.window.document.querySelector('[data-platform-id="unknown-sender"] .message-head')?.textContent).toContain('发送者未确认');
+  expect(dom.window.document.querySelector('[data-platform-id="unknown-sender"] .message-head')?.textContent).toContain('时间未知');
+});
+
+it('searches real archive titles locally and updates the selected reader heading', async () => {
+  const search = dom.window.document.getElementById('conversationSearch') as HTMLInputElement;
+  search.value = '另一个';
+  search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  const archive = dom.window.document.querySelector<HTMLButtonElement>('#archives [data-archive]');
+  expect(archive?.textContent).toContain('另一个 Mock 档案');
+  expect(dom.window.document.querySelectorAll('#archives [data-archive]')).toHaveLength(1);
+  archive!.click();
+  await vi.waitFor(() => expect(dom.window.document.getElementById('archiveTitle')?.textContent).toBe('另一个 Mock 档案'));
+  await vi.waitFor(() => expect(visibleIds()).toHaveLength(messages.length));
+  expect(dom.window.document.getElementById('archiveMeta')?.textContent).toContain('已保存 1 条消息');
+});
+
 it('loads the built HTML, JavaScript, and stylesheet from local disk resources', async () => {
   const html = await readFile(rendererFiles.htmlPath, 'utf8');
   const javascript = await readFile(rendererFiles.javascriptPath, 'utf8');

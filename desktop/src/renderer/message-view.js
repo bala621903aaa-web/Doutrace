@@ -76,7 +76,13 @@ export function createMessageView({ api, state, $, esc, setStatus, onReference, 
     const rows = state.loadedMessages;
     pausePlayingMedia($('messages'));
     $('messages').innerHTML = rows.length ? rows.map(message => {
-      const sender = message.senderName || (message.senderId === accountId ? '我' : '对方');
+      const relation = message.kind === 'system' || !accountId || !message.senderId
+        ? 'neutral' : message.senderId === accountId ? 'outgoing' : 'incoming';
+      const sender = relation === 'outgoing' ? '我' : message.senderName ||
+        (relation === 'incoming' ? '对方' : '发送者未确认');
+      const sentDate = new Date(message.sentAtMs);
+      const timestamp = Number.isFinite(message.sentAtMs) && Number.isFinite(sentDate.getTime())
+        ? sentDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '时间未知';
       const media = attachments.filter(item => item.messagePk === message.messagePk).map(item => {
         const source = state.mediaSources.get(item.id);
         const url = source?.url;
@@ -100,9 +106,9 @@ export function createMessageView({ api, state, $, esc, setStatus, onReference, 
         return `<div class="attachment-row"><video controls preload="none" src="${esc(url)}"></video><small data-media-status="${esc(item.id)}">${label}</small></div>`;
       }).join('');
       const reference = message.replySnapshot
-        ? `<button class="reference" ${message.replySnapshot.status === 'available' ? `data-reference="${esc(message.replyToPlatformMessageId)}"` : 'disabled'}>引用：${esc(message.replySnapshot.text || '目标消息尚未采集')}</button>`
+        ? `<button class="reference" ${message.replySnapshot.status === 'available' ? `data-reference="${esc(message.replyToPlatformMessageId)}"` : 'disabled'}><span class="reference__label">引用消息</span><span class="reference__text">${esc(message.replySnapshot.text || '目标消息尚未采集')}</span></button>`
         : '';
-      return `<article class="message" data-message-pk="${esc(message.messagePk)}" data-platform-id="${esc(message.platformMessageId)}"><div class="message-head"><b>${esc(sender)}</b><span>${message.sentAtMs === null ? '时间未知' : esc(new Date(message.sentAtMs).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }))}</span></div><div class="message-body">${esc(message.text || `[${kindLabels[message.kind] || '消息'}]`)}</div><small class="message-badge">${esc(kindLabels[message.kind] || '消息')} · ${esc(contentLabels[message.contentStatus] || '内容状态未知')}</small><div class="media">${media}</div>${reference}</article>`;
+      return `<article class="message message--${relation}" data-sender-relation="${relation}" data-message-pk="${esc(message.messagePk)}" data-platform-id="${esc(message.platformMessageId)}"><span class="message-avatar" aria-hidden="true">${esc(Array.from(sender)[0] || '?')}</span><div class="message-content"><div class="message-head"><b>${esc(sender)}</b><time>${esc(timestamp)}</time></div><div class="message-bubble">${reference}<div class="message-body">${esc(message.text || `[${kindLabels[message.kind] || '消息'}]`)}</div><div class="media">${media}</div><small class="message-badge">${esc(kindLabels[message.kind] || '消息')} · ${esc(contentLabels[message.contentStatus] || '内容状态未知')}</small></div></div></article>`;
     }).join('') + '<div class="empty" id="filterEmpty" hidden>当前已加载消息中没有符合筛选条件的结果，请调整或清除筛选。</div>'
       : '<div class="empty">当前页没有消息。</div>';
 
