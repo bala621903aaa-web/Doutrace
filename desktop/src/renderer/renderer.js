@@ -1,4 +1,6 @@
 import { createChatArchiveController } from './chat-archive.js';
+import { chatArchiveMarkup } from './chat-archive-view.js';
+import { mountAppShell } from './shell/app-shell.js';
 
 const api = window.desktopArchive;
 const state = {
@@ -26,6 +28,7 @@ const state = {
 };
 
 const $ = id => document.getElementById(id);
+$('chat-archive-page').innerHTML = chatArchiveMarkup;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[character]));
@@ -91,6 +94,20 @@ function render() {
 }
 
 const chatArchive = createChatArchiveController({ api, state, $, esc, setStatus, render });
+
+mountAppShell({
+  documentRef: document,
+  onBeforeLeave: ({ from }) => {
+    if (from !== 'archive') return;
+    chatArchive.cancelPending();
+    chatArchive.cleanupMedia();
+  },
+  onAfterEnter: ({ to }) => {
+    if (to !== 'archive') return;
+    if (state.app) void chatArchive.loadMessages();
+    else chatArchive.initialize();
+  }
+});
 
 $('connect').addEventListener('click', async () => {
   state.busy = true;

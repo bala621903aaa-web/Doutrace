@@ -1,4 +1,4 @@
-import { copyFile, mkdir } from 'node:fs/promises';
+import { cp, copyFile, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
@@ -12,6 +12,7 @@ const rendererSource = resolve(desktopRoot, 'src', 'renderer');
 export async function buildRenderer(options = {}) {
   const outDir = resolve(options.outDir ?? resolve(desktopRoot, 'dist', 'renderer'));
   await mkdir(outDir, { recursive: true });
+  await cp(resolve(rendererSource, 'icons'), resolve(outDir, 'icons'), { recursive: true, force: true });
   await build({
     entryPoints: [
       resolve(rendererSource, 'renderer.js'),
