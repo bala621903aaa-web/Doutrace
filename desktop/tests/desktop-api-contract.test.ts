@@ -13,7 +13,8 @@ describe('desktop IPC contract wiring', () => {
       ['cancelRepair', 'archive-cancel-repair'],
       ['retryAttachment', 'archive-retry-attachment'],
       ['recordMediaEvidence', 'archive-record-media-evidence'],
-      ['exportConversation', 'archive-export']
+      ['exportConversation', 'archive-export'],
+      ['getConversationStats', 'archive-get-conversation-stats']
     ] as const;
     for (const [method, channel] of methods) {
       expect(api).toContain(`${method}(`);

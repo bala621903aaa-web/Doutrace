@@ -14,6 +14,13 @@ it('calls the attachment retry API from the archive view', async () => {
         getContext: async () => context,
         getMessages: async () => [{ messagePk: 'message', platformMessageId: '1', senderId: 'sender', sentAtMs: 1_700_000_000_000,
           kind: 'image', text: '', contentStatus: 'parsed' }],
+        getConversationStats: async (input: { accountId: string; conversationId: string }) => ({
+          accountId: input.accountId, conversationId: input.conversationId, scope: 'archived-conversation' as const,
+          timeZone: 'Asia/Shanghai' as const,
+          stats: { totalMessages: 0, invalidMessageCount: 0, distinctSenderCount: 0, senderCounts: [], unknownSenderMessageCount: 0,
+            kindCounts: { text: 0, image: 0, voice: 0, 'video-file': 0, 'video-share': 0, emoji: 0, system: 0, unknown: 0 },
+            dailyCounts: {}, unknownTimestampCount: 0, invalidTimestampCount: 0 }
+        }),
         getAttachments: async () => [{ id: 'attachment', messagePk: 'message', assetState: 'current', status: 'failed', canRetry: true,
           error: 'attachment-http-404' }],
         retryAttachment,

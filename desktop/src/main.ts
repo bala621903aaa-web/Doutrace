@@ -16,6 +16,7 @@ import { P1_REQUIREMENTS, PROTOCOL_MAPPING_VERSION, TIME_MAPPING_VERSION } from 
 import type { AccountInfo, ConversationInfo } from './core/contracts.js';
 import type { DesktopAppState, DesktopContext } from './core/desktop-api.js';
 import { exportConversation } from './core/archive-export.js';
+import { loadConversationStats } from './core/conversation-stats-service.js';
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const developmentMode = existsSync(join(currentDirectory, 'development-mode.json'));
@@ -274,6 +275,10 @@ handleArchive('archive-retry-attachment', async (_event, input: { attachmentId: 
 handleArchive('archive-get-messages', (_event, input: { accountId: string; conversationId: string; query?: string; limit?: number; offset?: number }) => {
   if (!database) throw new Error('数据库尚未初始化。');
   return database.listMessages(input.accountId, input.conversationId, input.query ?? '', Math.min(input.limit ?? 500, 2_000), input.offset ?? 0);
+});
+handleArchive('archive-get-conversation-stats', (_event, input: unknown) => {
+  if (!database) throw new Error('数据库尚未初始化。');
+  return loadConversationStats(database, input);
 });
 handleArchive('archive-get-attachments', (_event, input: { accountId: string; conversationId: string }) => {
   if (!database) throw new Error('数据库尚未初始化。');

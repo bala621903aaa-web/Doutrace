@@ -56,7 +56,19 @@
             </div>
             <section id="analysis-tab-panel" class="analysis-panel" role="tabpanel" tabindex="0" aria-labelledby="analysis-tab-overview">
               <h2 id="analysis-tab-title">总览</h2>
-              <p id="analysis-tab-empty" class="module-empty" role="status">总览尚未接入真实归档统计。</p>
+              <p id="analysis-tab-empty" class="module-empty" role="status">请先在聊天档案中选择会话，点击「分析此会话」，再切换到总览。</p>
+              <div id="analysis-stats-content" class="analysis-stats" hidden>
+                <p id="analysis-stats-scope" class="analysis-stats__scope">统计范围：此会话当前已归档的全部消息；日期按上海时区。已归档不代表平台完整历史。</p>
+                <p id="analysis-stats-pair" class="analysis-stats__pair"></p>
+                <dl id="analysis-stats-metrics" class="analysis-stats__metrics">
+                  <div><dt>已归档消息数</dt><dd id="analysis-stats-total">—</dd></div>
+                  <div><dt>发送者统计桶数</dt><dd id="analysis-stats-senders">—</dd></div>
+                  <div><dt>未知时间戳</dt><dd id="analysis-stats-unknown-time">—</dd></div>
+                  <div><dt>无效时间戳</dt><dd id="analysis-stats-invalid-time">—</dd></div>
+                  <div><dt>未知发送者消息</dt><dd id="analysis-stats-unknown-sender">—</dd></div>
+                </dl>
+                <button id="analysis-stats-retry" class="analysis-stats__retry" type="button" hidden>重试</button>
+              </div>
             </section>
           </section>
 

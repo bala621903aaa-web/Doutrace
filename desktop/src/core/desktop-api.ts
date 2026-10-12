@@ -2,6 +2,7 @@ import type { ArchiveAttachmentRow, ArchiveConversationRow, ArchiveMessageRow, B
 import type { AccountInfo, ConversationInfo } from './contracts.js';
 import type { CollectorSnapshot } from './collector.js';
 import type { RepairConversationResult } from './archive-repair.js';
+import type { ConversationStats } from './conversation-stats.js';
 
 export interface DesktopAppState {
   version: string;
@@ -33,6 +34,15 @@ export interface DesktopMediaSource {
 
 export type DesktopAttachmentRow = Omit<ArchiveAttachmentRow, 'localPath'>;
 
+
+export interface DesktopConversationStats {
+  accountId: string;
+  conversationId: string;
+  scope: 'archived-conversation';
+  timeZone: 'Asia/Shanghai';
+  stats: ConversationStats;
+}
+
 export interface DesktopArchiveApi {
   getState(): Promise<DesktopAppState>;
   getContext(): Promise<DesktopContext>;
@@ -44,6 +54,7 @@ export interface DesktopArchiveApi {
   repairConversation(input: { accountId: string; conversationId: string; maxPages?: number }): Promise<RepairConversationResult>;
   cancelRepair(): Promise<void>;
   getMessages(input: { accountId: string; conversationId: string; query?: string; limit?: number; offset?: number }): Promise<ArchiveMessageRow[]>;
+  getConversationStats(input: { accountId: string; conversationId: string }): Promise<DesktopConversationStats>;
   getAttachments(input: { accountId: string; conversationId: string }): Promise<DesktopAttachmentRow[]>;
   getMediaUrl(input: { attachmentId: string }): Promise<DesktopMediaSource | null>;
   recordMediaEvidence(input: { attachmentId: string; fileVersion: string; event: BrowserMediaEvidenceEvent }): Promise<{ recorded: boolean; evidence: BrowserMediaEvidence }>;

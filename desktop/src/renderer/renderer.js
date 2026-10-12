@@ -1,6 +1,7 @@
 import { createChatArchiveController } from './chat-archive.js';
 import { chatArchiveMarkup } from './chat-archive-view.js';
 import { isStableAnalysisContext, mountAppShell, navigateAppShell } from './shell/app-shell.js';
+import { createAnalysisStatsController } from './analysis-stats.js';
 
 const api = window.desktopArchive;
 const state = {
@@ -104,7 +105,8 @@ function render() {
 
 const chatArchive = createChatArchiveController({ api, state, $, esc, setStatus, render });
 
-mountAppShell({
+let analysisStats = null;
+const shell = mountAppShell({
   documentRef: document,
   onBeforeLeave: ({ from }) => {
     if (from !== 'archive') return;
@@ -115,8 +117,17 @@ mountAppShell({
     if (to !== 'archive') return;
     if (state.app) void chatArchive.loadMessages();
     else chatArchive.initialize();
+  },
+  onAnalysisStateChange: snapshot => {
+    analysisStats?.handleSnapshot(snapshot);
   }
 });
+analysisStats = createAnalysisStatsController({
+  api,
+  documentRef: document,
+  getShellSnapshot: () => shell.getSnapshot()
+});
+analysisStats.handleSnapshot(shell.getSnapshot());
 
 $('connect').addEventListener('click', async () => {
   state.busy = true;

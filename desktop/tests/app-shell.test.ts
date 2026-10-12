@@ -12,16 +12,32 @@ type ShellController = {
     analysisContext: AnalysisContext | null;
   };
 };
+type ShellOptions = {
+  documentRef: Document;
+  onBeforeLeave?: (detail: { from: string; to: string }) => void;
+  onAfterEnter?: (detail: { from: string; to: string }) => void;
+  onAnalysisStateChange?: (snapshot: {
+    activeModule: string;
+    activeAnalysisTab: string;
+    analysisContext: AnalysisContext | null;
+  }) => void;
+};
+type ShellHandle = ShellController & {
+  pinAnalysisContext: (context: unknown) => boolean;
+  selectAnalysisTab: (tab: string, moveFocus?: boolean) => boolean;
+  navigate: (module: string) => boolean;
+};
 type AppShellModule = {
   isStableAnalysisContext: (context: unknown) => boolean;
-  mountAppShell: (options: { documentRef: Document }) => ShellController;
+  createAppShell: (options: ShellOptions) => ShellHandle;
+  mountAppShell: (options: ShellOptions) => ShellHandle;
   navigateAppShell: (module: string, analysisTab?: string, analysisContext?: unknown) => boolean;
 };
 
 // Renderer shell is plain JavaScript. desktop/tsconfig.json does not set allowJs.
 // @ts-expect-error TS7016: the shell module has no declaration file.
 const appShellModule = (await import('../src/renderer/shell/app-shell.js')) as AppShellModule;
-const { isStableAnalysisContext, mountAppShell, navigateAppShell } = appShellModule;
+const { isStableAnalysisContext, createAppShell, mountAppShell, navigateAppShell } = appShellModule;
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -61,6 +77,7 @@ async function loadShellRenderer(
         cancelRepair: async () => undefined,
         exportConversation: async () => ({ cancelled: true }),
         getMessages,
+        getConversationStats: async () => ({ accountId: 'synthetic-account', conversationId: 'synthetic-conversation', scope: 'archived-conversation', timeZone: 'Asia/Shanghai', stats: { totalMessages: 0, invalidMessageCount: 0, distinctSenderCount: 0, senderCounts: [], unknownSenderMessageCount: 0, kindCounts: { text: 0, image: 0, voice: 0, 'video-file': 0, 'video-share': 0, emoji: 0, system: 0, unknown: 0 }, dailyCounts: {}, unknownTimestampCount: 0, invalidTimestampCount: 0 } }),
         getAttachments: async () => [],
         getMediaUrl: async () => null,
         recordMediaEvidence: async () => ({ evidence: {} }),
@@ -155,7 +172,12 @@ it('switches all modules, preserves selected navigation state, and exposes four 
     expect(tab.tabIndex).toBe(0);
     expect(tabs.filter(item => item.getAttribute('aria-selected') === 'true')).toHaveLength(1);
     expect(document.getElementById('analysis-tab-title')?.textContent).toBe(tab.textContent?.trim());
-    expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('尚未');
+    const emptyText = document.getElementById('analysis-tab-empty')?.textContent ?? '';
+    if (tab.dataset.analysisTab === 'overview') {
+      expect(emptyText).toContain('分析此会话');
+    } else {
+      expect(emptyText).toContain('尚未');
+    }
     expect(document.getElementById('analysis-tab-panel')?.getAttribute('aria-labelledby')).toBe(tab.id);
     if (index > 0) expect(tabs[index - 1].tabIndex).toBe(-1);
   }
@@ -450,5 +472,52 @@ it('opens AI insights for the selected archive and keeps that pinned pair across
   document.querySelector<HTMLButtonElement>('[data-route="analysis"]')!.click();
   expect(document.querySelector('[data-analysis-tab="ai"]')?.getAttribute('aria-selected')).toBe('true');
   expect(document.querySelector('[data-route="archive"]')!.getAttribute('aria-current')).toBeNull();
+  dom.window.close();
+});
+
+it('notifies analysis state changes for pin, tab, and navigation with snapshot copies', () => {
+  const dom = new JSDOM(`<!doctype html><body>
+    <button data-route="archive" aria-current="page"></button>
+    <button data-route="analysis"></button>
+    <button data-route="media"></button>
+    <button data-route="reminders"></button>
+    <button data-route="settings"></button>
+    <section data-module="archive"></section>
+    <section data-module="analysis" hidden></section>
+    <section data-module="media" hidden></section>
+    <section data-module="reminders" hidden></section>
+    <section data-module="settings" hidden></section>
+    <button id="analysis-tab-overview" data-analysis-tab="overview" aria-selected="true"></button>
+    <button id="analysis-tab-interaction" data-analysis-tab="interaction" aria-selected="false"></button>
+    <button id="analysis-tab-journey" data-analysis-tab="journey" aria-selected="false"></button>
+    <button id="analysis-tab-ai" data-analysis-tab="ai" aria-selected="false"></button>
+    <section id="analysis-tab-panel" aria-labelledby="analysis-tab-overview"></section>
+    <h2 id="analysis-tab-title"></h2>
+    <p id="analysis-tab-empty"></p>
+  </body>`);
+  const snapshots: Array<ReturnType<ShellController['getSnapshot']>> = [];
+  const shell = createAppShell({
+    documentRef: dom.window.document,
+    onAnalysisStateChange: snapshot => { snapshots.push(snapshot); }
+  });
+  const baseline = snapshots.length;
+  expect(shell.pinAnalysisContext({ accountId: 'a1', conversationId: 'c1' })).toBe(true);
+  expect(snapshots.at(-1)).toEqual({
+    activeModule: 'archive',
+    activeAnalysisTab: 'overview',
+    analysisContext: { accountId: 'a1', conversationId: 'c1' }
+  });
+  const pinned = snapshots.at(-1)!;
+  pinned.analysisContext!.accountId = 'mutated';
+  expect(shell.getSnapshot().analysisContext).toEqual({ accountId: 'a1', conversationId: 'c1' });
+
+  expect(shell.selectAnalysisTab('interaction')).toBe(true);
+  expect(snapshots.at(-1)?.activeAnalysisTab).toBe('interaction');
+  expect(shell.pinAnalysisContext({ accountId: '', conversationId: 'c2' })).toBe(false);
+  expect(shell.getSnapshot().analysisContext).toEqual({ accountId: 'a1', conversationId: 'c1' });
+
+  expect(shell.navigate('analysis')).toBe(true);
+  expect(snapshots.at(-1)?.activeModule).toBe('analysis');
+  expect(snapshots.length).toBeGreaterThan(baseline);
   dom.window.close();
 });

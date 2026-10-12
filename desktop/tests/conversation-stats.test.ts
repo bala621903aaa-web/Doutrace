@@ -117,3 +117,40 @@ describe('summarizeConversationStats', () => {
     expect(rows).toHaveLength(1);
   });
 });
+
+  it('prefers senderId buckets, falls back to senderName, and never merges distinct IDs by nickname', () => {
+    const stats = summarizeConversationStats([
+      message({ senderId: 'id-1', senderName: 'Alice', kind: 'text' }),
+      message({ messagePk: 'b', senderId: 'id-1', senderName: 'Alice Renamed', kind: 'image' }),
+      message({ messagePk: 'c', senderId: 'id-2', senderName: 'Alice', kind: 'text' }),
+      message({ messagePk: 'd', senderId: undefined, senderName: 'Bob', kind: 'voice' }),
+      message({ messagePk: 'e', senderId: '   ', senderName: 'Bob', kind: 'text' }),
+      message({ messagePk: 'f', senderId: undefined, senderName: undefined, kind: 'system' })
+    ]);
+    expect(stats.distinctSenderCount).toBe(3);
+    expect(stats.unknownSenderMessageCount).toBe(1);
+    expect(stats.senderCounts).toEqual([
+      { senderId: 'id-1', senderName: 'Alice', count: 2 },
+      { senderId: 'id-2', senderName: 'Alice', count: 1 },
+      { senderId: null, senderName: 'Bob', count: 2 },
+      { senderId: null, senderName: null, count: 1 }
+    ]);
+  });
+
+  it('does not read text, segments, or payload getters while classifying timestamps', () => {
+    const row = message({ sentAtMs: Date.parse('2025-01-01T15:59:59.000Z') });
+    for (const key of ['text', 'segments', 'payload'] as const) {
+      Object.defineProperty(row, key, { get: () => { throw new Error(`${key}-must-not-be-read`); } });
+    }
+    const stats = summarizeConversationStats([
+      row,
+      message({ messagePk: 'after-midnight', sentAtMs: Date.parse('2025-01-01T16:00:30.000Z') }),
+      message({ messagePk: 'missing', sentAtMs: null }),
+      message({ messagePk: 'bad', sentAtMs: Number.NaN })
+    ]);
+    expect(stats.dailyCounts).toEqual({ '2025-01-01': 1, '2025-01-02': 1 });
+    expect(stats.unknownTimestampCount).toBe(1);
+    expect(stats.invalidTimestampCount).toBe(1);
+    const dailyTotal = Object.values(stats.dailyCounts).reduce((sum, count) => sum + count, 0);
+    expect(dailyTotal + stats.unknownTimestampCount + stats.invalidTimestampCount).toBe(stats.totalMessages);
+  });

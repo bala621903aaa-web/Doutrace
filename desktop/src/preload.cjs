@@ -12,6 +12,7 @@ const api = {
   cancelRepair: () => ipcRenderer.invoke('archive-cancel-repair'),
   retryAttachment: input => ipcRenderer.invoke('archive-retry-attachment', input),
   getMessages: input => ipcRenderer.invoke('archive-get-messages', input),
+  getConversationStats: input => ipcRenderer.invoke('archive-get-conversation-stats', input),
   getAttachments: input => ipcRenderer.invoke('archive-get-attachments', input),
   getMediaUrl: input => ipcRenderer.invoke('archive-get-media-url', input),
   recordMediaEvidence: input => ipcRenderer.invoke('archive-record-media-evidence', input),

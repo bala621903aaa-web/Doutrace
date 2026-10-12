@@ -9,7 +9,7 @@ const analysisTabLabels = Object.freeze({
 });
 
 const analysisTabStatus = Object.freeze({
-  overview: '总览尚未接入真实归档统计。',
+  overview: '请先在聊天档案中选择会话，点击「分析此会话」，再切换到总览。',
   interaction: '互动分析尚未接入真实归档统计。',
   journey: '聊天旅程尚未提供可追溯的归档事件。',
   ai: 'AI 洞察尚未提供真实分析服务，不会显示示例回答。'
@@ -31,7 +31,12 @@ export function isStableAnalysisContext(context) {
 
 let mountedShell;
 
-export function createAppShell({ documentRef = document, onBeforeLeave = () => {}, onAfterEnter = () => {} } = {}) {
+export function createAppShell({
+  documentRef = document,
+  onBeforeLeave = () => {},
+  onAfterEnter = () => {},
+  onAnalysisStateChange = () => {}
+} = {}) {
   const navigationItems = [...documentRef.querySelectorAll('[data-route]')];
   const modules = [...documentRef.querySelectorAll('[data-module]')];
   const analysisTabs = [...documentRef.querySelectorAll('[data-analysis-tab]')];
@@ -54,6 +59,20 @@ export function createAppShell({ documentRef = document, onBeforeLeave = () => {
   let activeAnalysisTab = analysisTabs.find(item => item.getAttribute('aria-selected') === 'true')?.dataset.analysisTab ?? 'overview';
   let pinnedAnalysisContext = null;
 
+  function getSnapshot() {
+    return {
+      activeModule,
+      activeAnalysisTab,
+      analysisContext: pinnedAnalysisContext
+        ? { accountId: pinnedAnalysisContext.accountId, conversationId: pinnedAnalysisContext.conversationId }
+        : null
+    };
+  }
+
+  function notifyAnalysisStateChange() {
+    onAnalysisStateChange(getSnapshot());
+  }
+
   function publishAnalysisContext() {
     if (!analysisModule) return;
     if (!pinnedAnalysisContext) {
@@ -70,6 +89,7 @@ export function createAppShell({ documentRef = document, onBeforeLeave = () => {
     if (!stable) return false;
     pinnedAnalysisContext = stable;
     publishAnalysisContext();
+    notifyAnalysisStateChange();
     return true;
   }
 
@@ -86,12 +106,16 @@ export function createAppShell({ documentRef = document, onBeforeLeave = () => {
     analysisPanel.setAttribute('aria-labelledby', ['analysis-tab-', tab].join(''));
     analysisTitle.textContent = label;
     analysisStatus.textContent = analysisTabStatus[tab];
+    notifyAnalysisStateChange();
     return true;
   }
 
   function navigate(module) {
     if (!APP_MODULES.includes(module)) return false;
-    if (module === activeModule) return true;
+    if (module === activeModule) {
+      notifyAnalysisStateChange();
+      return true;
+    }
 
     const previousModule = activeModule;
     onBeforeLeave({ from: previousModule, to: module });
@@ -102,6 +126,7 @@ export function createAppShell({ documentRef = document, onBeforeLeave = () => {
       else item.removeAttribute('aria-current');
     }
     onAfterEnter({ from: previousModule, to: module });
+    notifyAnalysisStateChange();
     return true;
   }
 
@@ -132,15 +157,7 @@ export function createAppShell({ documentRef = document, onBeforeLeave = () => {
     navigate,
     selectAnalysisTab,
     pinAnalysisContext,
-    getSnapshot() {
-      return {
-        activeModule,
-        activeAnalysisTab,
-        analysisContext: pinnedAnalysisContext
-          ? { accountId: pinnedAnalysisContext.accountId, conversationId: pinnedAnalysisContext.conversationId }
-          : null
-      };
-    }
+    getSnapshot
   };
 }
 
@@ -161,7 +178,9 @@ export function navigateAppShell(module, analysisTab, analysisContext) {
   if (analysisContext !== undefined && !stableContext) return false;
   if (analysisTab && !ANALYSIS_TABS.includes(analysisTab)) return false;
   if (!APP_MODULES.includes(module)) return false;
-  if (stableContext) mountedShell.pinAnalysisContext(stableContext);
+  // Select the destination tab before pinning so analysis+overview is not
+  // briefly active with a new pair when the intended landing tab is AI.
   if (analysisTab) mountedShell.selectAnalysisTab(analysisTab);
+  if (stableContext) mountedShell.pinAnalysisContext(stableContext);
   return mountedShell.navigate(module);
 }

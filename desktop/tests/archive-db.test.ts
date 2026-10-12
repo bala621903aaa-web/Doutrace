@@ -460,3 +460,118 @@ describe('ArchiveDatabase', () => {
     } finally { database.close(); await rm(directory, { recursive: true, force: true }); }
   });
 });
+
+describe('ArchiveDatabase listConversationStatsRows', () => {
+  it('returns every archived row for the conversation while default listMessages stays paginated', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'douyin-archive-stats-'));
+    const database = await ArchiveDatabase.open(join(directory, 'archive.sqlite3'));
+    try {
+      const otherAccount: AccountInfo = { accountId: '10002', source: 'test' };
+      const otherConversation: ConversationInfo = {
+        conversationId: 'conv-other', title: '其他会话', participantIds: ['10001', '30003'], source: 'test'
+      };
+      const runId = database.startRun(account, conversation, 'stats-run');
+      const batch: NormalizedMessage[] = [];
+      for (let index = 0; index < 2001; index += 1) {
+        batch.push(message(String(10_000 + index), String(index + 1), `body-${index}-SECRET`));
+        if (batch.length === 200) {
+          database.savePage({
+            runId, account, conversation,
+            page: page(batch, null, `cursor-${index}`, true),
+            state: 'running'
+          });
+          batch.length = 0;
+        }
+      }
+      if (batch.length) {
+        database.savePage({
+          runId, account, conversation,
+          page: page(batch, null, null, false),
+          state: 'complete'
+        });
+      }
+      database.finishRun(runId, 'complete', 'history_end');
+
+      const otherRun = database.startRun(otherAccount, { ...conversation, conversationId: conversation.conversationId }, 'other-account');
+      database.savePage({
+        runId: otherRun, account: otherAccount, conversation: { ...conversation },
+        page: {
+          accountId: otherAccount.accountId, conversationId: conversation.conversationId,
+          messages: [{
+            ...message('other-account-1', '1', 'other-account-secret'),
+            accountId: otherAccount.accountId
+          }],
+          nextCursor: null, hasMore: false, source: 'test'
+        },
+        state: 'complete'
+      });
+      database.finishRun(otherRun, 'complete', 'history_end');
+
+      const otherConvRun = database.startRun(account, otherConversation, 'other-conv');
+      database.savePage({
+        runId: otherConvRun, account, conversation: otherConversation,
+        page: {
+          accountId: account.accountId, conversationId: otherConversation.conversationId,
+          messages: [{
+            ...message('other-conv-1', '1', 'other-conv-secret'),
+            conversationId: otherConversation.conversationId
+          }],
+          nextCursor: null, hasMore: false, source: 'test'
+        },
+        state: 'complete'
+      });
+      database.finishRun(otherConvRun, 'complete', 'history_end');
+
+      const paged = database.listMessages(account.accountId, conversation.conversationId);
+      const statsRows = database.listConversationStatsRows(account.accountId, conversation.conversationId);
+      expect(paged).toHaveLength(500);
+      expect(statsRows).toHaveLength(2001);
+      expect(statsRows.every(row => Object.keys(row).sort().join(',') === 'kind,senderId,senderName,sentAtMs')).toBe(true);
+      expect(JSON.stringify(statsRows)).not.toContain('SECRET');
+      expect(statsRows.some(row => 'text' in row || 'segments' in row || 'payload' in row)).toBe(false);
+      expect(database.listConversationStatsRows(otherAccount.accountId, conversation.conversationId)).toHaveLength(1);
+      expect(database.listConversationStatsRows(account.accountId, otherConversation.conversationId)).toHaveLength(1);
+      expect(database.listConversationStatsRows(account.accountId, 'missing')).toEqual([]);
+
+      const orderedMessages = database.listMessages(account.accountId, conversation.conversationId, '', 2001, 0);
+      expect(statsRows.map(row => row.sentAtMs)).toEqual(orderedMessages.map(row => row.sentAtMs));
+      expect(statsRows.map(row => row.senderId)).toEqual(orderedMessages.map(row => row.senderId));
+    } finally {
+      database.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('preserves null timestamps and maps non-number sqlite values to non-finite sentAtMs', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'douyin-archive-stats-time-'));
+    const dbPath = join(directory, 'archive.sqlite3');
+    const database = await ArchiveDatabase.open(dbPath);
+    try {
+      const runId = database.startRun(account, conversation, 'time-run');
+      database.savePage({
+        runId, account, conversation,
+        page: page([
+          { ...message('t1', '1', 'null-time'), sentAtMs: null },
+          message('t2', '2', 'valid-time')
+        ], null, null, false),
+        state: 'complete'
+      });
+      database.close();
+      const raw = new RawDatabase(dbPath);
+      raw.exec(`UPDATE messages SET sent_at_ms = 'not-a-timestamp' WHERE platform_message_id = 't1'`);
+      raw.close();
+      const reopened = await ArchiveDatabase.open(dbPath);
+      try {
+        const rows = reopened.listConversationStatsRows(account.accountId, conversation.conversationId);
+        expect(rows).toHaveLength(2);
+        const weird = rows.find(row => row.sentAtMs === null || typeof row.sentAtMs !== 'number' || Number.isNaN(row.sentAtMs));
+        expect(weird).toBeTruthy();
+        expect(rows.every(row => Object.keys(row).sort().join(',') === 'kind,senderId,senderName,sentAtMs')).toBe(true);
+      } finally {
+        reopened.close();
+      }
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+});
