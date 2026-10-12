@@ -15,6 +15,20 @@ const analysisTabStatus = Object.freeze({
   ai: 'AI 洞察尚未提供真实分析服务，不会显示示例回答。'
 });
 
+function readStableAnalysisContext(context) {
+  if (!context || typeof context !== 'object') return null;
+  const accountId = context.accountId;
+  const conversationId = context.conversationId;
+  if (typeof accountId !== 'string' || accountId.trim() === '') return null;
+  if (typeof conversationId !== 'string' || conversationId.trim() === '') return null;
+  return { accountId, conversationId };
+}
+
+/** True when a snapshot can pin an analysis session. Nicknames are not IDs. */
+export function isStableAnalysisContext(context) {
+  return readStableAnalysisContext(context) !== null;
+}
+
 let mountedShell;
 
 export function createAppShell({ documentRef = document, onBeforeLeave = () => {}, onAfterEnter = () => {} } = {}) {
@@ -35,8 +49,29 @@ export function createAppShell({ documentRef = document, onBeforeLeave = () => {
     throw new Error('app-shell-markup-contract-invalid');
   }
 
+  const analysisModule = modules.find(page => page.dataset.module === 'analysis');
   let activeModule = navigationItems.find(item => item.getAttribute('aria-current') === 'page')?.dataset.route ?? 'archive';
   let activeAnalysisTab = analysisTabs.find(item => item.getAttribute('aria-selected') === 'true')?.dataset.analysisTab ?? 'overview';
+  let pinnedAnalysisContext = null;
+
+  function publishAnalysisContext() {
+    if (!analysisModule) return;
+    if (!pinnedAnalysisContext) {
+      delete analysisModule.dataset.analysisAccount;
+      delete analysisModule.dataset.analysisConversation;
+      return;
+    }
+    analysisModule.dataset.analysisAccount = pinnedAnalysisContext.accountId;
+    analysisModule.dataset.analysisConversation = pinnedAnalysisContext.conversationId;
+  }
+
+  function pinAnalysisContext(context) {
+    const stable = readStableAnalysisContext(context);
+    if (!stable) return false;
+    pinnedAnalysisContext = stable;
+    publishAnalysisContext();
+    return true;
+  }
 
   function selectAnalysisTab(tab, moveFocus = false) {
     if (!ANALYSIS_TABS.includes(tab)) return false;
@@ -96,8 +131,15 @@ export function createAppShell({ documentRef = document, onBeforeLeave = () => {
   return {
     navigate,
     selectAnalysisTab,
+    pinAnalysisContext,
     getSnapshot() {
-      return { activeModule, activeAnalysisTab };
+      return {
+        activeModule,
+        activeAnalysisTab,
+        analysisContext: pinnedAnalysisContext
+          ? { accountId: pinnedAnalysisContext.accountId, conversationId: pinnedAnalysisContext.conversationId }
+          : null
+      };
     }
   };
 }
@@ -108,9 +150,18 @@ export function mountAppShell(options) {
   return mountedShell;
 }
 
-/** Stable navigation entry point for later page modules, including Archive to AI. */
-export function navigateAppShell(module, analysisTab) {
+/**
+ * Stable navigation entry, including Archive to AI insights.
+ * A provided analysisContext is copied only when it has stable accountId and
+ * conversationId values. Omitting it keeps the previous module navigation.
+ */
+export function navigateAppShell(module, analysisTab, analysisContext) {
   if (!mountedShell) return false;
-  if (analysisTab && !mountedShell.selectAnalysisTab(analysisTab)) return false;
+  const stableContext = analysisContext === undefined ? null : readStableAnalysisContext(analysisContext);
+  if (analysisContext !== undefined && !stableContext) return false;
+  if (analysisTab && !ANALYSIS_TABS.includes(analysisTab)) return false;
+  if (!APP_MODULES.includes(module)) return false;
+  if (stableContext) mountedShell.pinAnalysisContext(stableContext);
+  if (analysisTab) mountedShell.selectAnalysisTab(analysisTab);
   return mountedShell.navigate(module);
 }

@@ -372,3 +372,38 @@ it('keeps ordinary search, pagination, and quoted navigation working', async () 
   expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
   expect(scrollIntoView).toHaveBeenCalledTimes(1);
 });
+
+it('pins accountId and conversationId for AI insights without following a later archive selection', async () => {
+  const document = dom.window.document;
+  changeFilter('kindFilter', 'image');
+  const action = document.getElementById('analyzeConversation') as HTMLButtonElement;
+  expect(action.disabled).toBe(false);
+  expect(action.textContent).toBe('分析此会话');
+  action.click();
+
+  const analysis = document.querySelector<HTMLElement>('[data-module="analysis"]');
+  expect(document.querySelector('[data-route="analysis"]')?.getAttribute('aria-current')).toBe('page');
+  expect(analysis?.hasAttribute('hidden')).toBe(false);
+  expect(document.querySelector('[data-module="archive"]')?.hasAttribute('hidden')).toBe(true);
+  expect(document.querySelector('[data-analysis-tab="ai"]')?.getAttribute('aria-selected')).toBe('true');
+  expect(document.getElementById('analysis-tab-title')?.textContent).toBe('AI 洞察');
+  expect(document.getElementById('analysis-tab-empty')?.textContent).toBe('AI 洞察尚未提供真实分析服务，不会显示示例回答。');
+  expect(analysis?.dataset.analysisAccount).toBe('account');
+  expect(analysis?.dataset.analysisConversation).toBe('conversation');
+  expect(analysis?.getAttribute('data-analysis-title')).toBeNull();
+  expect((document.getElementById('kindFilter') as HTMLSelectElement).value).toBe('image');
+
+  document.querySelector<HTMLButtonElement>('[data-route="archive"]')!.click();
+  await vi.waitFor(() => expect(document.querySelector('[data-module="archive"]')?.hasAttribute('hidden')).toBe(false));
+  document.querySelector<HTMLButtonElement>('[data-archive="other"]')!.click();
+  await vi.waitFor(() => expect(document.getElementById('archiveTitle')?.textContent).toBe('另一个 Mock 档案'));
+  expect(analysis?.dataset.analysisAccount).toBe('account');
+  expect(analysis?.dataset.analysisConversation).toBe('conversation');
+  expect(action.disabled).toBe(false);
+
+  action.click();
+  expect(document.querySelector('[data-module="analysis"]')?.hasAttribute('hidden')).toBe(false);
+  expect(document.querySelector('[data-analysis-tab="ai"]')?.getAttribute('aria-selected')).toBe('true');
+  expect(analysis?.dataset.analysisAccount).toBe('account');
+  expect(analysis?.dataset.analysisConversation).toBe('other');
+});

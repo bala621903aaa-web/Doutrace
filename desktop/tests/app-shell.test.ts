@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import { JSDOM } from 'jsdom';
 import { afterAll, expect, it, vi } from 'vitest';
+import { isStableAnalysisContext, mountAppShell, navigateAppShell } from '../src/renderer/shell/app-shell.js';
 import { closeRendererFixture, loadRenderer, rendererFiles, rendererPathFromResourceUrl } from './renderer-test-dom.js';
 
 function deferred<T>() {
@@ -123,6 +125,8 @@ it('switches all modules, preserves selected navigation state, and exposes four 
   }
 
   document.querySelector<HTMLButtonElement>('[data-route="analysis"]')!.click();
+  expect(document.querySelector('[data-module="analysis"]')?.getAttribute('data-analysis-account')).toBeNull();
+  expect(document.querySelector('[data-module="analysis"]')?.getAttribute('data-analysis-conversation')).toBeNull();
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
   expect(tabs.map(tab => tab.textContent?.trim())).toEqual(['总览', '互动分析', '聊天旅程', 'AI 洞察']);
   expect(tabs.filter(tab => tab.getAttribute('aria-selected') === 'true').map(tab => tab.textContent?.trim())).toEqual(['总览']);
@@ -260,4 +264,173 @@ it('uses the native Windows title-bar overlay without changing the security or w
   expect(main).toContain("event.preventDefault()");
   expect(main).not.toContain('frame: false');
   expect(main).not.toContain('window-control');
+});
+
+it('accepts only a stable accountId and conversationId as analysis context', () => {
+  expect(isStableAnalysisContext({ accountId: 'account-1', conversationId: 'conversation-1' })).toBe(true);
+  expect(isStableAnalysisContext({ accountId: ' id-a ', conversationId: 'id-b', title: '昵称' })).toBe(true);
+  expect(isStableAnalysisContext({ title: '昵称' })).toBe(false);
+  expect(isStableAnalysisContext({ accountId: '', conversationId: 'conversation-1' })).toBe(false);
+  expect(isStableAnalysisContext({ accountId: '   ', conversationId: 'conversation-1' })).toBe(false);
+  expect(isStableAnalysisContext({ accountId: 'account-1', conversationId: ' ' })).toBe(false);
+  expect(isStableAnalysisContext({ accountId: null, conversationId: 'conversation-1' })).toBe(false);
+  expect(isStableAnalysisContext({ accountId: 1, conversationId: 'conversation-1' })).toBe(false);
+  expect(isStableAnalysisContext(null)).toBe(false);
+});
+
+it('does not navigate to analysis before the shell is mounted', () => {
+  expect(navigateAppShell('analysis', 'ai', { accountId: 'account-1', conversationId: 'conversation-1' })).toBe(false);
+});
+
+it('lands on analysis AI with or without a pinned context and keeps earlier navigation', () => {
+  const dom = new JSDOM(`<!doctype html><html><body>
+    <button data-route="archive" aria-current="page"></button>
+    <button data-route="analysis"></button>
+    <button data-route="media"></button>
+    <button data-route="reminders"></button>
+    <button data-route="settings"></button>
+    <section data-module="archive"></section>
+    <section data-module="analysis" hidden></section>
+    <section data-module="media" hidden></section>
+    <section data-module="reminders" hidden></section>
+    <section data-module="settings" hidden></section>
+    <button id="analysis-tab-overview" data-analysis-tab="overview" aria-selected="true"></button>
+    <button id="analysis-tab-interaction" data-analysis-tab="interaction" aria-selected="false"></button>
+    <button id="analysis-tab-journey" data-analysis-tab="journey" aria-selected="false"></button>
+    <button id="analysis-tab-ai" data-analysis-tab="ai" aria-selected="false"></button>
+    <section id="analysis-tab-panel"></section>
+    <h2 id="analysis-tab-title"></h2>
+    <p id="analysis-tab-empty"></p>
+  </body></html>`);
+  const document = dom.window.document;
+  const shell = mountAppShell({ documentRef: document });
+  const analysis = document.querySelector<HTMLElement>('[data-module="analysis"]')!;
+
+  expect(navigateAppShell('analysis', 'ai')).toBe(true);
+  expect(shell.getSnapshot()).toMatchObject({ activeModule: 'analysis', activeAnalysisTab: 'ai', analysisContext: null });
+  expect(analysis.hidden).toBe(false);
+  expect(analysis.getAttribute('data-analysis-account')).toBeNull();
+  expect(document.querySelector('[data-analysis-tab="ai"]')?.getAttribute('aria-selected')).toBe('true');
+
+  expect(navigateAppShell('archive')).toBe(true);
+  expect(shell.getSnapshot().activeModule).toBe('archive');
+  expect(shell.getSnapshot().analysisContext).toBeNull();
+
+  const input = {
+    accountId: ' id-a ',
+    conversationId: 'conv-1',
+    title: '昵称',
+    messages: [{ text: '合成正文' }]
+  };
+  expect(navigateAppShell('analysis', 'ai', input)).toBe(true);
+  input.accountId = 'mutated';
+  input.messages.push({ text: '更多正文' });
+  expect(shell.getSnapshot().analysisContext).toEqual({ accountId: ' id-a ', conversationId: 'conv-1' });
+  expect(analysis.dataset.analysisAccount).toBe(' id-a ');
+  expect(analysis.dataset.analysisConversation).toBe('conv-1');
+  expect(analysis.getAttribute('data-analysis-title')).toBeNull();
+  const published = shell.getSnapshot().analysisContext;
+  if (published) published.accountId = 'changed-by-caller';
+  expect(shell.getSnapshot().analysisContext).toEqual({ accountId: ' id-a ', conversationId: 'conv-1' });
+
+  expect(navigateAppShell('media', 'overview', { accountId: ' ', conversationId: 'conv-1' })).toBe(false);
+  expect(shell.getSnapshot()).toMatchObject({
+    activeModule: 'analysis',
+    activeAnalysisTab: 'ai',
+    analysisContext: { accountId: ' id-a ', conversationId: 'conv-1' }
+  });
+
+  expect(navigateAppShell('settings')).toBe(true);
+  expect(shell.getSnapshot().activeModule).toBe('settings');
+  expect(shell.getSnapshot().analysisContext).toEqual({ accountId: ' id-a ', conversationId: 'conv-1' });
+  expect(navigateAppShell('analysis', 'overview')).toBe(true);
+  expect(shell.getSnapshot()).toMatchObject({
+    activeModule: 'analysis',
+    activeAnalysisTab: 'overview',
+    analysisContext: { accountId: ' id-a ', conversationId: 'conv-1' }
+  });
+  expect(analysis.dataset.analysisAccount).toBe(' id-a ');
+  dom.window.close();
+});
+
+it('disables analyze-this-conversation when the archive has no stable selection', async () => {
+  const getMessages = vi.fn(async () => []);
+  const { dom } = await loadShellRenderer(getMessages, false, {
+    getContext: async () => ({
+      account: null,
+      conversations: [],
+      archivedConversations: [],
+      collector: { state: 'idle', pages: 0, messages: 0, reason: null },
+      repair: { running: false, lastResult: null },
+      exporting: false
+    })
+  });
+  const document = dom.window.document;
+  await vi.waitFor(() => expect(document.getElementById('archiveCount')?.textContent).toBe('0'));
+  const action = document.getElementById('analyzeConversation') as HTMLButtonElement;
+  expect(action.textContent).toBe('分析此会话');
+  expect(action.disabled).toBe(true);
+  action.click();
+  expect(document.querySelector('[data-route="archive"]')?.getAttribute('aria-current')).toBe('page');
+  expect(document.querySelector('[data-module="analysis"]')?.hasAttribute('hidden')).toBe(true);
+  expect(document.querySelector('[data-analysis-tab="ai"]')?.getAttribute('aria-selected')).toBe('false');
+  expect(document.querySelector('[data-module="analysis"]')?.getAttribute('data-analysis-account')).toBeNull();
+  expect(getMessages).not.toHaveBeenCalled();
+  dom.window.close();
+});
+
+it('disables analyze-this-conversation when the selected account id is blank', async () => {
+  const getMessages = vi.fn(async () => []);
+  const { dom } = await loadShellRenderer(getMessages, false, {
+    getContext: async () => ({
+      account: null,
+      conversations: [],
+      archivedConversations: [{
+        accountId: '',
+        conversationId: 'synthetic-conversation',
+        title: '缺少账号',
+        messageCount: 1
+      }],
+      collector: { state: 'idle', pages: 0, messages: 0, reason: null },
+      repair: { running: false, lastResult: null },
+      exporting: false
+    })
+  });
+  const document = dom.window.document;
+  await vi.waitFor(() => expect(document.getElementById('archiveTitle')?.textContent).toBe('缺少账号'));
+  const action = document.getElementById('analyzeConversation') as HTMLButtonElement;
+  expect(action.disabled).toBe(true);
+  action.click();
+  expect(document.querySelector('[data-module="archive"]')?.hasAttribute('hidden')).toBe(false);
+  expect(document.querySelector('[data-analysis-tab="overview"]')?.getAttribute('aria-selected')).toBe('true');
+  expect(getMessages).not.toHaveBeenCalled();
+  dom.window.close();
+});
+
+it('opens AI insights for the selected archive and keeps that pinned pair across rail navigation', async () => {
+  const { dom } = await loadShellRenderer();
+  const document = dom.window.document;
+  const action = document.getElementById('analyzeConversation') as HTMLButtonElement;
+  expect(action.disabled).toBe(false);
+  expect(action.textContent).toBe('分析此会话');
+  action.click();
+
+  const analysis = document.querySelector<HTMLElement>('[data-module="analysis"]')!;
+  expect(document.querySelector('[data-route="analysis"]')?.getAttribute('aria-current')).toBe('page');
+  expect(analysis.hasAttribute('hidden')).toBe(false);
+  expect(document.querySelector('[data-module="archive"]')?.hasAttribute('hidden')).toBe(true);
+  expect(document.querySelector('[data-analysis-tab="ai"]')?.getAttribute('aria-selected')).toBe('true');
+  expect(document.getElementById('analysis-tab-title')?.textContent).toBe('AI 洞察');
+  expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('尚未');
+  expect(analysis.dataset.analysisAccount).toBe('synthetic-account');
+  expect(analysis.dataset.analysisConversation).toBe('synthetic-conversation');
+
+  document.querySelector<HTMLButtonElement>('[data-route="media"]')!.click();
+  expect(document.querySelector('[data-module="media"]')?.hasAttribute('hidden')).toBe(false);
+  expect(analysis.dataset.analysisAccount).toBe('synthetic-account');
+  expect(analysis.dataset.analysisConversation).toBe('synthetic-conversation');
+  document.querySelector<HTMLButtonElement>('[data-route="analysis"]')!.click();
+  expect(document.querySelector('[data-analysis-tab="ai"]')?.getAttribute('aria-selected')).toBe('true');
+  expect(document.querySelector('[data-route="archive"]')!.getAttribute('aria-current')).toBeNull();
+  dom.window.close();
 });
