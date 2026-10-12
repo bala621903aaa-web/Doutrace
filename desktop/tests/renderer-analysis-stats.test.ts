@@ -86,7 +86,7 @@ async function loadAnalysisRenderer(getConversationStats: ReturnType<typeof vi.f
 
 afterAll(closeRendererFixture);
 
-it('does not query stats without pinned context and only queries on overview', async () => {
+it('does not query stats without pinned context and hides overview stats off overview', async () => {
   const getConversationStats = vi.fn(async (input: { accountId: string; conversationId: string }) =>
     dto(input.accountId, input.conversationId, 2001));
   const { document, dom, resourceErrors } = await loadAnalysisRenderer(getConversationStats);
@@ -109,8 +109,10 @@ it('does not query stats without pinned context and only queries on overview', a
   expect(document.getElementById('analysis-stats-content')?.hasAttribute('hidden')).toBe(false);
   expect(document.getElementById('analysis-tab-empty')?.hasAttribute('hidden')).toBe(true);
 
-  document.querySelector<HTMLButtonElement>('[data-analysis-tab="interaction"]')!.click();
+  document.querySelector<HTMLButtonElement>('[data-analysis-tab="journey"]')!.click();
+  expect(getConversationStats).toHaveBeenCalledTimes(1);
   expect(document.getElementById('analysis-stats-content')?.hasAttribute('hidden')).toBe(true);
+  expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(true);
   expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('尚未');
   expect(document.getElementById('analysis-tab-empty')?.hasAttribute('hidden')).toBe(false);
   expect(resourceErrors.filter(item => !item.includes('Error loading stylesheet'))).toEqual([]);
@@ -136,7 +138,7 @@ it('shows full-conversation totals and retries failures for the pinned pair', as
   expect(document.getElementById('analysis-stats-pair')?.textContent).toContain('conversation');
 
   // Force a failure + retry on the same pinned pair.
-  document.querySelector<HTMLButtonElement>('[data-analysis-tab="interaction"]')!.click();
+  document.querySelector<HTMLButtonElement>('[data-analysis-tab="journey"]')!.click();
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="overview"]')!.click();
   await vi.waitFor(() => expect(getConversationStats).toHaveBeenCalledTimes(2));
   await vi.waitFor(() => expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('失败'));
@@ -160,7 +162,7 @@ it('renders zero and mismatched dto states without putting bodies into the analy
   expect(panel?.textContent).not.toContain('page-body');
   expect(panel?.textContent).not.toContain('SECRET');
 
-  document.querySelector<HTMLButtonElement>('[data-analysis-tab="interaction"]')!.click();
+  document.querySelector<HTMLButtonElement>('[data-analysis-tab="journey"]')!.click();
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="overview"]')!.click();
   await vi.waitFor(() => expect(getConversationStats).toHaveBeenCalledTimes(2));
   await vi.waitFor(() => expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('失败'));

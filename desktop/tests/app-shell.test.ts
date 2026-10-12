@@ -173,11 +173,13 @@ it('switches all modules, preserves selected navigation state, and exposes four 
     expect(tabs.filter(item => item.getAttribute('aria-selected') === 'true')).toHaveLength(1);
     expect(document.getElementById('analysis-tab-title')?.textContent).toBe(tab.textContent?.trim());
     const emptyText = document.getElementById('analysis-tab-empty')?.textContent ?? '';
-    if (tab.dataset.analysisTab === 'overview') {
+    if (tab.dataset.analysisTab === 'overview' || tab.dataset.analysisTab === 'interaction') {
       expect(emptyText).toContain('分析此会话');
     } else {
       expect(emptyText).toContain('尚未');
     }
+    expect(document.getElementById('analysis-stats-content')?.hasAttribute('hidden')).toBe(true);
+    expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(true);
     expect(document.getElementById('analysis-tab-panel')?.getAttribute('aria-labelledby')).toBe(tab.id);
     if (index > 0) expect(tabs[index - 1].tabIndex).toBe(-1);
   }
