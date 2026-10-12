@@ -46,7 +46,7 @@
             <header class="module-heading">
               <p class="module-heading__eyebrow">按已归档内容查看</p>
               <h1 id="analysis-module-title">聊天分析</h1>
-              <p>从真实归档消息出发；当前尚未接入分析结果。</p>
+              <p>从真实归档消息出发。总览与互动分析展示已归档统计；聊天旅程和 AI 洞察仍未接入。</p>
             </header>
             <div class="analysis-tablist" role="tablist" aria-label="聊天分析标签">
               <button id="analysis-tab-overview" class="analysis-tab" type="button" role="tab" data-analysis-tab="overview" aria-controls="analysis-tab-panel" aria-selected="true" tabindex="0">总览</button>
@@ -68,6 +68,22 @@
                   <div><dt>未知发送者消息</dt><dd id="analysis-stats-unknown-sender">—</dd></div>
                 </dl>
                 <button id="analysis-stats-retry" class="analysis-stats__retry" type="button" hidden>重试</button>
+              </div>
+              <div id="analysis-interaction-content" class="analysis-stats analysis-interaction" hidden>
+                <p id="analysis-interaction-scope" class="analysis-stats__scope"></p>
+                <p id="analysis-interaction-pair" class="analysis-stats__pair"></p>
+                <p id="analysis-interaction-bucket-note" class="analysis-stats__note"></p>
+                <h3 class="analysis-interaction__heading">消息类型</h3>
+                <dl id="analysis-interaction-kinds" class="analysis-stats__metrics"></dl>
+                <h3 class="analysis-interaction__heading">按日计数</h3>
+                <ul id="analysis-interaction-days" class="analysis-interaction__list"></ul>
+                <h3 class="analysis-interaction__heading">发送者统计桶</h3>
+                <ul id="analysis-interaction-senders" class="analysis-interaction__list"></ul>
+                <section id="analysis-interaction-gap" class="analysis-interaction__gap">
+                  <h3>主动发起与回复间隔</h3>
+                  <p id="analysis-interaction-gap-copy"></p>
+                </section>
+                <button id="analysis-interaction-retry" class="analysis-stats__retry" type="button" hidden>重试</button>
               </div>
             </section>
           </section>

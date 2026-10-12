@@ -131,7 +131,6 @@ export function createAnalysisStatsController({ api, documentRef = document, get
       invalidate();
       content.hidden = true;
       retry.hidden = true;
-      empty.hidden = false;
       return;
     }
     const pair = snapshot.analysisContext;
