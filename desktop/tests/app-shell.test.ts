@@ -2,8 +2,26 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { afterAll, expect, it, vi } from 'vitest';
-import { isStableAnalysisContext, mountAppShell, navigateAppShell } from '../src/renderer/shell/app-shell.js';
 import { closeRendererFixture, loadRenderer, rendererFiles, rendererPathFromResourceUrl } from './renderer-test-dom.js';
+
+type AnalysisContext = { accountId: string; conversationId: string };
+type ShellController = {
+  getSnapshot: () => {
+    activeModule: string;
+    activeAnalysisTab: string;
+    analysisContext: AnalysisContext | null;
+  };
+};
+type AppShellModule = {
+  isStableAnalysisContext: (context: unknown) => boolean;
+  mountAppShell: (options: { documentRef: Document }) => ShellController;
+  navigateAppShell: (module: string, analysisTab?: string, analysisContext?: unknown) => boolean;
+};
+
+// Renderer shell is plain JavaScript. desktop/tsconfig.json does not set allowJs.
+// @ts-expect-error TS7016: the shell module has no declaration file.
+const appShellModule = (await import('../src/renderer/shell/app-shell.js')) as AppShellModule;
+const { isStableAnalysisContext, mountAppShell, navigateAppShell } = appShellModule;
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
