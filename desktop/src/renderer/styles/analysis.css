@@ -1,0 +1,47 @@
+.analysis-stats {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  max-width: 42rem;
+}
+
+.analysis-stats__scope,
+.analysis-stats__pair {
+  margin: 0;
+  color: var(--color-text-muted, #52606d);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.analysis-stats__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.analysis-stats__metrics > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, #e6ddd0);
+  border-radius: 10px;
+  background: var(--color-surface, #fffdf8);
+}
+
+.analysis-stats__metrics dt {
+  margin: 0;
+  color: var(--color-text-muted, #52606d);
+  font-size: 0.85rem;
+}
+
+.analysis-stats__metrics dd {
+  margin: 0;
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text, #2b2118);
+}
+
+.analysis-stats__retry {
+  justify-self: start;
+}

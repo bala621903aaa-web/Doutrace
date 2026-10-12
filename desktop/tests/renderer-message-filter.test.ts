@@ -33,7 +33,8 @@ beforeEach(async () => {
           collector: { state: 'idle' }, repair: { running: false, lastResult: null }, exporting: false
         }),
         getMessages,
-        getAttachments: async () => [{ id: 'voice-attachment', messagePk: 'voice-unknown', assetState: 'current', status: 'saved' }],
+        getConversationStats: async (input: { accountId: string; conversationId: string }) => ({ accountId: input.accountId, conversationId: input.conversationId, scope: 'archived-conversation', timeZone: 'Asia/Shanghai', stats: { totalMessages: 0, invalidMessageCount: 0, distinctSenderCount: 0, senderCounts: [], unknownSenderMessageCount: 0, kindCounts: { text: 0, image: 0, voice: 0, 'video-file': 0, 'video-share': 0, emoji: 0, system: 0, unknown: 0 }, dailyCounts: {}, unknownTimestampCount: 0, invalidTimestampCount: 0 } }),
+                getAttachments: async () => [{ id: 'voice-attachment', messagePk: 'voice-unknown', assetState: 'current', status: 'saved' }],
         getMediaUrl: async () => ({ url: 'file:///mock.wav', fileVersion: 'mock-version', mime: 'audio/wav', family: 'audio', evidence: {} }),
         recordMediaEvidence,
         onEvent: () => () => {}
@@ -484,7 +485,8 @@ async function loadContextEventFixture() {
   const loaded = await loadRenderer(window => {
     Object.assign(window, { CSS: { escape: (value: string) => value }, desktopArchive: {
       getState, getContext: async () => context, getMessages,
-      getAttachments: async () => [],
+        getConversationStats: async (input: { accountId: string; conversationId: string }) => ({ accountId: input.accountId, conversationId: input.conversationId, scope: 'archived-conversation', timeZone: 'Asia/Shanghai', stats: { totalMessages: 0, invalidMessageCount: 0, distinctSenderCount: 0, senderCounts: [], unknownSenderMessageCount: 0, kindCounts: { text: 0, image: 0, voice: 0, 'video-file': 0, 'video-share': 0, emoji: 0, system: 0, unknown: 0 }, dailyCounts: {}, unknownTimestampCount: 0, invalidTimestampCount: 0 } }),
+              getAttachments: async () => [],
       onEvent: (callback: typeof emit) => { emit = callback; return () => {}; }
     } });
   });

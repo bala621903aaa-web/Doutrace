@@ -832,7 +832,26 @@ export class ArchiveDatabase {
     return result;
   }
 
-  getRepairSnapshot(accountId: string, conversationId: string): RepairSnapshot {
+  listConversationStatsRows(accountId: string, conversationId: string): Array<Pick<ArchiveMessageRow, 'senderId' | 'senderName' | 'kind' | 'sentAtMs'>> {
+    const rows = this.db.prepare(`SELECT sender_id, sender_name, kind, sent_at_ms FROM messages
+      WHERE account_id = ? AND conversation_id = ?
+      ORDER BY CASE WHEN sent_at_ms IS NULL THEN 1 ELSE 0 END, sent_at_ms, length(sequence_index), sequence_index, message_pk`).all(accountId, conversationId);
+    return rows.map(row => {
+      const sentAtMs = row.sent_at_ms === null || row.sent_at_ms === undefined
+        ? null
+        : typeof row.sent_at_ms === 'number'
+          ? row.sent_at_ms
+          : Number.NaN;
+      return {
+        senderId: row.sender_id ? String(row.sender_id) : undefined,
+        senderName: row.sender_name ? String(row.sender_name) : undefined,
+        kind: String(row.kind) as ArchiveMessageRow['kind'],
+        sentAtMs
+      };
+    });
+  }
+
+    getRepairSnapshot(accountId: string, conversationId: string): RepairSnapshot {
     const rows = this.db.prepare(`SELECT m.message_pk, m.platform_message_id, m.content_status, p.payload_status
       FROM messages m LEFT JOIN message_payloads p ON p.message_pk=m.message_pk
       WHERE m.account_id=? AND m.conversation_id=? ORDER BY m.message_pk`).all(accountId, conversationId);

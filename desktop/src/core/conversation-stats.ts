@@ -1,6 +1,9 @@
 import type { ArchiveMessageRow } from './archive-db.js';
 import type { MessageKind } from './contracts.js';
 
+/** Fields required to summarize archived conversation stats without message bodies. */
+export type ConversationStatsRow = Pick<ArchiveMessageRow, 'senderId' | 'senderName' | 'kind' | 'sentAtMs'>;
+
 const MESSAGE_KINDS: ReadonlySet<string> = new Set([
   'text', 'image', 'voice', 'video-file', 'video-share', 'emoji', 'system', 'unknown'
 ]);
@@ -66,7 +69,7 @@ function emptyStats(): ConversationStats {
   };
 }
 
-function isMessageRow(value: unknown): value is Partial<ArchiveMessageRow> {
+function isStatsRow(value: unknown): value is Partial<ConversationStatsRow> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
@@ -103,7 +106,7 @@ function shanghaiDay(timestamp: unknown): string | null {
  * Sender identity uses senderId when present and falls back to senderName; rows without
  * either are grouped as unknown and excluded from distinctSenderCount.
  */
-export function summarizeConversationStats(messages: readonly ArchiveMessageRow[]): ConversationStats {
+export function summarizeConversationStats(messages: readonly ConversationStatsRow[]): ConversationStats {
   const result = emptyStats();
   if (!Array.isArray(messages)) return result;
 
@@ -111,7 +114,7 @@ export function summarizeConversationStats(messages: readonly ArchiveMessageRow[
   let hasUnknownSender = false;
 
   for (const candidate of messages as readonly unknown[]) {
-    if (!isMessageRow(candidate)) {
+    if (!isStatsRow(candidate)) {
       result.invalidMessageCount += 1;
       continue;
     }
