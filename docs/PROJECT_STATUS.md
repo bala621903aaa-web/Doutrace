@@ -1,6 +1,6 @@
 # DouTrace 项目状态
 
-最后核对：**2026-10-12（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。本轮只读核对源码/已有证据并新增三份协作文档，没有重跑业务测试或 Electron。
+最后核对：**2026-10-12（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。协作文档建立时只读核对源码/已有证据；本次小范围修订仅澄清流程、路径和维护责任，没有重跑业务测试或 Electron。下文源码/测试路径均相对于仓库根目录，桌面代码统一使用 `desktop/src/`、`desktop/tests/` 前缀。
 
 ## 1. 基线与交付边界
 
@@ -23,14 +23,14 @@
 | 状态 | 能力与实际边界 | 代码/测试依据 |
 | --- | --- | --- |
 | 已完成 | 本地 Renderer 构建迁移与最小模块拆分；esbuild 把业务模块打入单一 renderer.js，另有本地 CSS/HTML/SVG | `desktop/scripts/build-renderer.mjs`、`desktop/tests/renderer-test-dom.ts` |
-| 已完成 | 单 TitleBar、64px rail、五入口、分析四标签；离开档案清理媒体/失效请求，返回重载 | `renderer/shell/app-shell.js`、`renderer/renderer.js`、`tests/app-shell.test.ts`（均在 desktop 下） |
-| 已实现；阶段 PARTIAL | 暖白/暖棕只读聊天档案、会话列表、220ms 搜索、500 条分页、当前页组合筛选/计数/空态、引用定位及高亮 | `desktop/src/renderer/{chat-archive-view,chat-archive,message-view}.js`、`styles/archive.css`、`tests/renderer-message-filter.test.ts` |
-| 已完成离线功能验证 | 真实 Main/Preload/SQLite 的账号/会话隔离；相同昵称不同 ID 不混淆，缺 senderId/system 中性布局；内容转义 | `desktop/src/core/{archive-db,desktop-api}.ts`、`src/renderer/message-view.js`；P1-b2 身份验收 7 项 |
-| 已完成离线功能验证 | 本地图片解码、音视频时间推进；持续可见节点保持、隐藏暂停/不自动恢复、离页清理，图片/音频证据回读 | `desktop/src/core/attachment-service.ts`、`src/renderer/message-view.js`、媒体相关测试及 Electron 报告 |
+| 已完成 | 单 TitleBar、64px rail、五入口、分析四标签；离开档案清理媒体/失效请求，返回重载 | `desktop/src/renderer/shell/app-shell.js`、`desktop/src/renderer/renderer.js`、`desktop/tests/app-shell.test.ts` |
+| 已实现；阶段 PARTIAL | 暖白/暖棕只读聊天档案、会话列表、220ms 搜索、500 条分页、当前页组合筛选/计数/空态、引用定位及高亮 | `desktop/src/renderer/{chat-archive-view,chat-archive,message-view}.js`、`desktop/src/renderer/styles/archive.css`、`desktop/tests/renderer-message-filter.test.ts` |
+| 已完成离线功能验证 | 真实 Main/Preload/SQLite 的账号/会话隔离；相同昵称不同 ID 不混淆，缺 senderId/system 中性布局；内容转义 | `desktop/src/core/{archive-db,desktop-api}.ts`、`desktop/src/renderer/message-view.js`；P1-b2 身份验收 7 项 |
+| 已完成离线功能验证 | 本地图片解码、音视频时间推进；持续可见节点保持、隐藏暂停/不自动恢复、离页清理，图片/音频证据回读 | `desktop/src/core/attachment-service.ts`、`desktop/src/renderer/message-view.js`、媒体相关测试及 Electron 报告 |
 | 已完成基础模块 | `summarizeConversationStats`：发送者/类型/上海时区归日，未知/异常行和时间；不读取正文，只汇总传入数据 | `desktop/src/core/conversation-stats.ts`、对应 6 项测试；**尚未接入分析 UI/IPC** |
 | 部分完成 | SQLite/分页采集/游标恢复/旧档案补修/附件队列/ZIP 导出代码和自动化存在；UI 管理入口保留 | `desktop/src/core/{collector,archive-repair,archive-export,attachment-service}.ts`；正式联网路径被门禁关闭，不表示当前真实采集获验收 |
 | 部分完成 | ZIP 导出服务测试存在，P1-b2 实际窗口只验取消保存对话框后状态恢复 | `desktop/tests/archive-export.test.ts`；未在该轮验证实际系统保存对话框和最终 ZIP 文件 |
-| 尚未实现 | 总览/互动分析真实数据展示，主动发起/回复间隔指标，聊天旅程和可追溯事件服务 | `desktop/src/renderer/index.html`、`shell/app-shell.js` 仅四标签空状态 |
+| 尚未实现 | 总览/互动分析真实数据展示，主动发起/回复间隔指标，聊天旅程和可追溯事件服务 | `desktop/src/renderer/index.html`、`desktop/src/renderer/shell/app-shell.js` 仅四标签空状态 |
 | 尚未实现 | “分析此会话”完整上下文；AI 检索/模型/持久化/固定来源快照/证据抽屉 | 当前 `navigateAppShell(module, analysisTab?)` 无联系人上下文；未有 AI 服务 |
 | 尚未实现 | 独立媒体管理、火花提醒引擎、设置功能页 | `desktop/src/renderer/index.html` 明确占位；已有档案媒体阅读不等于媒体管理完成 |
 | 历史原型 | 根目录 `src/`、`public/` Manifest V3 扩展；独立 IndexedDB/ZIP 路径 | 根 package.json `0.2.0`、`public/README.md`；不是当前桌面主线或正式 P1 证据 |
@@ -39,9 +39,9 @@
 
 ## 3. 架构与持续保持的边界
 
-- Main：`desktop/src/main.ts` 注册窄 IPC、SQLite/媒体/导出/采集服务，精确检查当前窗口主帧与本地 index.html；Preload：`desktop/src/preload.cjs` 只暴露 `desktopArchive`，类型在 `core/desktop-api.ts`。
-- 数据：`core/archive-db.ts` 的账号/会话范围、持久 `messagePk` 和平台消息 ID；`adapters/douyin-history-adapter.ts` 是受门禁保护的真实历史适配器。UI 不直接操作 SQL、文件系统或供应商密钥。
-- Renderer：原生 DOM/JS、本地 CSS，无新增前端框架。`renderer.js` 装配唯一控制器与管理事件；`chat-archive.js` 管理请求/选择/分页/引用；`message-view.js` 管理消息 DOM/媒体/筛选；视图与样式局部隔离。
+- Main：`desktop/src/main.ts` 注册窄 IPC、SQLite/媒体/导出/采集服务，精确检查当前窗口主帧与本地 index.html；Preload：`desktop/src/preload.cjs` 只暴露 `desktopArchive`，类型在 `desktop/src/core/desktop-api.ts`。
+- 数据：`desktop/src/core/archive-db.ts` 的账号/会话范围、持久 `messagePk` 和平台消息 ID；`desktop/src/adapters/douyin-history-adapter.ts` 是受门禁保护的真实历史适配器。UI 不直接操作 SQL、文件系统或供应商密钥。
+- Renderer：原生 DOM/JS、本地 CSS，无新增前端框架。`desktop/src/renderer/renderer.js` 装配唯一控制器与管理事件；`desktop/src/renderer/chat-archive.js` 管理请求/选择/分页/引用；`desktop/src/renderer/message-view.js` 管理消息 DOM/媒体/筛选；视图与样式局部隔离。
 - Shell：单一受信任入口 URL + 内存导航，持久 module root 切 hidden，不重建档案根；契约见 [P1B1-SHELL-CONTRACT.md](../P1B1-SHELL-CONTRACT.md)。共享入口、IPC、schema、tokens 变更先由单一所有者固定，不能 A/B 并改。
 - UI 冻结规则完整列于 [AGENTS.md](../AGENTS.md)：四个业务导航+底部设置、四分析标签、只读档案、单联系人 AI/固定来源/精确证据定位。设计目标不计入已实现能力。
 
@@ -80,21 +80,21 @@ P1-b2 最终 35 项构成为历史阅读/媒体 21、Shell 3、真实身份/SQLi
 | 编号/级别 | 证据与影响边界 | 后续处理 |
 | --- | --- | --- |
 | R1 / 观察项 | 首次分页/引用高亮超时未解释；后续均通过，尚无可复现新回归 | 保留原件与备注；出现新复现时记录 DOM/IPC/时序，定向修复，不主动无限复测 |
-| R2 / MINOR | `chat-archive.js/loadMessages` 在代次校验前写 `mediaSources` | 独立修复任务：把缓存副作用纳入有效请求范围，补旧响应媒体测试；本轮未修 |
-| R3 / MINOR | `handleContextEvent` 在档案隐藏时可能发起无意义加载 | 独立任务按当前模块可见性约束，保持返回初始化；本轮未修 |
-| R4 / MINOR、能力缺口 | `navigateAppShell` 不传当前联系人上下文，“分析此会话”未接入 | 先做最小契约任务，再开展分析 UI；不以昵称替代稳定 ID |
+| R2 / MINOR | `desktop/src/renderer/chat-archive.js` 的 `loadMessages` 在代次校验前写 `mediaSources` | 独立修复任务：把缓存副作用纳入有效请求范围，补旧响应媒体测试；本轮未修 |
+| R3 / MINOR | `desktop/src/renderer/chat-archive.js` 的 `handleContextEvent` 在档案隐藏时可能发起无意义加载 | 独立任务按当前模块可见性约束，保持返回初始化；本轮未修 |
+| R4 / MINOR、能力缺口 | `desktop/src/renderer/shell/app-shell.js` 的 `navigateAppShell` 不传当前联系人上下文，“分析此会话”未接入 | 先做最小契约任务，再开展分析 UI；不以昵称替代稳定 ID |
 | R5 / 正式发布阻断 | P1 证据与当前实现不匹配，正式门关闭 | 需另行授权的真实证据工作；离线测试/文档不能解决或绕过 |
 | R6 / 环境限制 | Windows 缺 VS C++ 时 better-sqlite3 的 node-gyp 重编译可能失败 | 区分依赖环境与业务回归，先查锁文件/预构建/运行时兼容；系统工具需批准 |
 
-**建议下一独立开发任务（未执行）：**固定 `accountId + conversationId → 聊天分析 → AI 洞察`。最小范围为 `desktop/src/renderer/shell/app-shell.js`、`renderer.js`、`chat-archive-view.js`，配套 `desktop/tests/app-shell.test.ts`、`renderer-message-filter.test.ts` 和 Shell 契约。取当前 `chatArchive.getSnapshot()`，校验/复制上下文、无有效选择时禁用，兼容既有导航；无需通用 IPC、Main/Preload 修改或模型服务。先单所有者完成契约，C 独立审查，Integration 验证，再安排下游。
+**建议下一独立开发任务（未执行）：**固定 `accountId + conversationId → 聊天分析 → AI 洞察`。最小范围为 `desktop/src/renderer/shell/app-shell.js`、`desktop/src/renderer/renderer.js`、`desktop/src/renderer/chat-archive-view.js`，配套 `desktop/tests/app-shell.test.ts`、`desktop/tests/renderer-message-filter.test.ts` 和 `P1B1-SHELL-CONTRACT.md`。取当前 `chatArchive.getSnapshot()`，校验/复制上下文、无有效选择时禁用，兼容既有导航；无需通用 IPC、Main/Preload 修改或模型服务。先单所有者完成契约，C 独立审查，Integration 验证，再安排下游。
 
 后续路线：真实统计 DTO/范围与指标口径 → 总览/互动 → 可追溯旅程 → AI 状态结构 → 经授权的检索/模型/持久化。主动发起、回复中位数的定义及模型/云端授权/历史保存方案仍须确认。没有本页授权就不自动开工。
 
 ## 6. 证据来源与可用性
 
-本轮已读取下列原件；**它们在 Git 忽略的本地 artifacts 中，不随 GitHub 克隆交付**。新工作树不复制证据目录或数据库；缺少原件时只能引用本页登记的历史摘要，不能声称已现场复核。校验/迁移脱敏资料须逐项批准范围并保留来源哈希。
+协作文档建立时已读取下列原件；**它们仅本地可用，位于 Git 忽略的 artifacts 中，不随 GitHub 克隆交付**。新工作树不复制证据目录或数据库；缺少原件时只能引用本页登记的历史摘要，不能声称已现场复核。校验/迁移脱敏资料须逐项批准范围并保留来源哈希。
 
-原件根目录：`C:/Users/25222/.codex/worktrees/doutrace-ui-v1/抖音聊天记录抓取/`。下表路径均相对此根，SHA256 为本轮读取值：
+此节的 `<repo-root>` 表示保存历史验收资产的本地 UI 集成仓库根目录，不表示任意新克隆或文档工作树已有这些文件。下表路径均相对于该根（如 `<repo-root>/artifacts/p1-b2-integration/`），SHA256 为文档建立时登记值；本次修订保留这些值，未重新验收原件：
 
 | 原件 | 可用性 | SHA256 |
 | --- | --- | --- |
@@ -106,7 +106,7 @@ P1-b2 最终 35 项构成为历史阅读/媒体 21、Shell 3、真实身份/SQLi
 
 P1-b2 同目录另有 `root-tests.json`、`desktop-tests.json`、最终 `electron-ui-results.json` / `shell-ui-results.json` / `identity-ui-results.json` / `layout-ui-results.json`、`race-diagnostic.json`、夹具/构建清单及网络记录；最后诊断目录含 DOM/IPC/Renderer 时间轴、`verification-summary.json` 和单次执行标记。上述详细文件本轮不重跑、不修改。
 
-真实窗口 JPEG 在 P1-b2 同目录，原报告登记并由本轮存在性/哈希检查：
+真实窗口 JPEG 在 `<repo-root>/artifacts/p1-b2-integration/`，原报告登记，文档建立时已核对存在性/哈希；仅本地可用：
 
 | 文件 | 字节 | SHA256 |
 | --- | ---: | --- |
@@ -115,13 +115,13 @@ P1-b2 同目录另有 `root-tests.json`、`desktop-tests.json`、最终 `electro
 | `screenshot-C-minimum-archive-native.jpg` | 72059 | `d2c00d0f2b88d65f364f28e615d1724e87afa2d1fd20c3cc4d41fb65f05b6cfe` |
 | `screenshot-D-search-combination-native.jpg` | 69984 | `aefa413c65bc27ec3a5f42382cecf88c8e637eb9b1b694fd199f2245c09b61aa` |
 
-更早报告位于同根 `artifacts/p1-a1-integration/`、`p1-a2-integration/`、`p1-b1-integration/`。P0 计划/证据来源清单仍是该根两份未跟踪文件；c566 原件及旧 Agent 工作树保留，不纳入本次提交。
+更早报告位于同根 `artifacts/p1-a1-integration/`、`artifacts/p1-a2-integration/`、`artifacts/p1-b1-integration/`。P0 计划/证据来源清单仍是该根两份未跟踪文件；c566 原件及旧 Agent 工作树保留，不纳入本次提交。
 
-设计来源：`C:/Users/25222/Documents/ChatGPT/DouTrace-UI-Reference/` 下完整交接记录与最终 Stitch 包；本机文件名部分使用 URL 百分号编码，可解码名称定位 `DouTrace_UI设计分支_完整交接记录.md`。本轮读取交接决策，不重新设计或复制整个参考包。未持有资料的未来 Agent 应先确认可用性；冻结规则已摘要到 AGENTS.md。
+设计来源为仓库外、仅本地可用的 `DouTrace-UI-Reference/` 资料目录，内有完整交接记录与最终 Stitch 包；部分文件名使用 URL 百分号编码，可解码名称定位 `DouTrace_UI设计分支_完整交接记录.md`。文档建立时读取交接决策，不重新设计或复制整个参考包。未持有资料的未来 Agent 应先向资料持有人确认目录位置与可用性；冻结规则已摘要到 AGENTS.md。
 
 ## 7. 更新记录规范
 
-后续状态更新请保留以下字段，新增证据明确属于哪个 SHA，不覆盖旧失败：
+每次阶段集成完成后，由 **Integration Agent 更新本文件，Agent C 核对更新内容与实际验收证据**，包括提交 SHA、用例数量、证据可用性、门禁和未解决问题。核对结果应随阶段审查记录保存；证据缺失或结论不符时明确标注，不补造 PASS。更新请保留以下字段，新增证据明确属于哪个 SHA，不覆盖旧失败：
 
 ```text
 日期/时区：

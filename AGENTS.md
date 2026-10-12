@@ -27,7 +27,7 @@
 
 ## Git 与资产保护
 
-- 默认分支及 `master`、`codex/dev-baseline-p2-p5`、历史集成/开发树受保护。只在任务分支修改，未经明确授权不切换或改写其他工作树、不合入默认分支、不 push/发布。
+- 默认分支及 `master`、`codex/dev-baseline-p2-p5`、历史集成/开发树的保护是**项目流程约束**，不代表 GitHub 已启用技术分支保护。当前 GitHub 默认分支 `protected=false`（本轮用户确认）。仍只在任务分支修改，未经明确授权不切换或改写其他工作树、不合入默认分支、不 push/发布。
 - 目标分支/路径已存在、HEAD 不符、有来源不明修改或冲突时停止相关写操作并报告；不得自行 reset、stash、clean、强制覆盖、删除分支/Worktree 或移动用户文件。
 - 保留未跟踪 `UI_INTEGRATION_PLAN.md`、`UI_ACCEPTANCE_EVIDENCE_SOURCES.md` 及历史 artifacts。只精确暂存本次允许的文件，不使用 `git add .` 捎带资料/数据。
 - 集成须有用户授权及 C 对确切 SHA 的审查结论；普通 merge（需要清晰集成历史时 `--no-ff`），不 squash/rebase/强推。核对合并父提交、受审 SHA 祖先关系、变更范围和最终状态。
@@ -85,4 +85,4 @@ git status --short
 
 P1-b2 仍为历史 **PARTIAL**：首次引用/分页竞态 30 秒高亮超时原因未明；后续受控验收和最后一次原操作定向复测通过，`RACE_FINAL_CHECK=PASS`，历史 `RACE_DIAGNOSIS=INCONCLUSIVE`。没有新缺陷证据，可保留备注继续；不能据此改写旧结论或自动重复刷 PASS。
 
-后续更新 `docs/PROJECT_STATUS.md` 时附日期、完整 SHA、范围、用例数量、证据位置/可用性、门禁、已知问题和人工待验。新增记录/明确替代关系，保留失败原件与历史不确定性。资料缺失时说明缺失，不凭旧记忆补造 PASS。
+每次阶段集成完成后，由 **Integration Agent 更新 `docs/PROJECT_STATUS.md`，Agent C 核对更新内容与实际验收证据**。更新须附日期、完整 SHA、范围、用例数量、证据位置/可用性、门禁、已知问题和人工待验。新增记录/明确替代关系，保留失败原件与历史不确定性。资料缺失时说明缺失，不凭旧记忆补造 PASS。
