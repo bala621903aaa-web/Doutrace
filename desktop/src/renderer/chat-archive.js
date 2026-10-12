@@ -173,16 +173,20 @@ export function createChatArchiveController({ api, state, $, esc, setStatus, ren
       ]);
       const attachments = allAttachments.filter(item => item.assetState !== 'superseded');
       const visible = new Set(rows.map(row => row.messagePk));
+      const resolvedMedia = new Map();
       await Promise.all(attachments.filter(item => visible.has(item.messagePk)).map(async item => {
         if (item.status === 'saved') {
           const source = await api.getMediaUrl({ attachmentId: item.id });
-          if (source) state.mediaSources.set(item.id, source);
-          else state.mediaSources.delete(item.id);
+          resolvedMedia.set(item.id, source || null);
         } else {
-          state.mediaSources.delete(item.id);
+          resolvedMedia.set(item.id, null);
         }
       }));
       if (generation !== state.loadGeneration) return null;
+      for (const [attachmentId, source] of resolvedMedia) {
+        if (source) state.mediaSources.set(attachmentId, source);
+        else state.mediaSources.delete(attachmentId);
+      }
       state.loadedMessages = rows;
       state.loadedAttachments = attachments;
       state.loadedQuery = query;

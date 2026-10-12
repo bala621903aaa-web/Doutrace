@@ -377,6 +377,61 @@ it('keeps ordinary search, pagination, and quoted navigation working', async () 
   expect(scrollIntoView).toHaveBeenCalledTimes(1);
 });
 
+it('does not write mediaSources from a superseded loadMessages response', async () => {
+  const audio = dom.window.document.querySelector<HTMLAudioElement>('[data-media-audio="voice-attachment"]');
+  expect(audio?.getAttribute('src')).toBe('file:///mock.wav');
+  expect(audio?.dataset.fileVersion).toBe('mock-version');
+
+  const pendingPage = deferred<typeof messages>();
+  const staleSource = { url: 'file:///stale-old.wav', fileVersion: 'stale-version', mime: 'audio/wav', family: 'audio', evidence: {} };
+  const pendingMedia = deferred<typeof staleSource>();
+  const desktop = dom.window as unknown as {
+    desktopArchive: { getMediaUrl: (input: { attachmentId: string }) => Promise<typeof staleSource> };
+  };
+  const getMediaUrl = vi.fn(async () => pendingMedia.promise);
+  desktop.desktopArchive.getMediaUrl = getMediaUrl;
+
+  getMessages.mockImplementationOnce(() => pendingPage.promise);
+  const next = dom.window.document.getElementById('next') as HTMLButtonElement;
+  next.disabled = false;
+  next.click();
+  expect(getMessages).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 500 }));
+
+  clickReference('2', '1');
+  expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
+  pendingPage.resolve(messages);
+  await vi.waitFor(() => expect(getMediaUrl).toHaveBeenCalledWith({ attachmentId: 'voice-attachment' }));
+  pendingMedia.resolve(staleSource);
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  expect(dom.window.document.querySelector('[data-media-audio="voice-attachment"]')).toBe(audio);
+  expect(audio?.getAttribute('src')).toBe('file:///mock.wav');
+  expect(audio?.dataset.fileVersion).toBe('mock-version');
+  expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
+  expect(dom.window.document.getElementById('pageInfo')?.textContent).toContain('第 1～5 条');
+  expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
+  audio!.currentTime = 0;
+  audio!.dispatchEvent(new dom.window.Event('play'));
+  audio!.currentTime = 1;
+  audio!.dispatchEvent(new dom.window.Event('timeupdate'));
+  await vi.waitFor(() => expect(recordMediaEvidence).toHaveBeenCalledWith(expect.objectContaining({
+    attachmentId: 'voice-attachment', fileVersion: 'mock-version', event: { type: 'audio-playback', advancedSeconds: 1 }
+  })));
+  expect(recordMediaEvidence).not.toHaveBeenCalledWith(expect.objectContaining({ fileVersion: 'stale-version' }));
+
+  desktop.desktopArchive.getMediaUrl = async () => ({
+    url: 'file:///refreshed.wav', fileVersion: 'refreshed-version', mime: 'audio/wav', family: 'audio', evidence: {}
+  });
+  const search = dom.window.document.getElementById('search') as HTMLInputElement;
+  search.value = '有效刷新';
+  search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  await vi.waitFor(() => {
+    const refreshed = dom.window.document.querySelector<HTMLAudioElement>('[data-media-audio="voice-attachment"]');
+    expect(refreshed?.getAttribute('src')).toBe('file:///refreshed.wav');
+    expect(refreshed?.dataset.fileVersion).toBe('refreshed-version');
+  });
+});
+
 it('pins accountId and conversationId for AI insights without following a later archive selection', async () => {
   const document = dom.window.document;
   changeFilter('kindFilter', 'image');
