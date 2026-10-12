@@ -81,3 +81,7 @@
   color: var(--color-text);
   font-size: var(--font-size-body);
 }
+
+.analysis-ai[hidden] {
+  display: none !important;
+}

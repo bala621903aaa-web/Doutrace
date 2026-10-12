@@ -1,6 +1,7 @@
 import { createChatArchiveController } from './chat-archive.js';
 import { chatArchiveMarkup } from './chat-archive-view.js';
 import { isStableAnalysisContext, mountAppShell, navigateAppShell } from './shell/app-shell.js';
+import { createAnalysisAiController } from './analysis-ai.js';
 import { createAnalysisInteractionController } from './analysis-interaction.js';
 import { createAnalysisJourneyController } from './analysis-journey.js';
 import { createAnalysisStatsController } from './analysis-stats.js';
@@ -110,6 +111,7 @@ const chatArchive = createChatArchiveController({ api, state, $, esc, setStatus,
 let analysisStats = null;
 let analysisInteraction = null;
 let analysisJourney = null;
+let analysisAi = null;
 const shell = mountAppShell({
   documentRef: document,
   onBeforeLeave: ({ from }) => {
@@ -126,6 +128,7 @@ const shell = mountAppShell({
     analysisStats?.handleSnapshot(snapshot);
     analysisInteraction?.handleSnapshot(snapshot);
     analysisJourney?.handleSnapshot(snapshot);
+    analysisAi?.handleSnapshot(snapshot);
   }
 });
 analysisStats = createAnalysisStatsController({
@@ -143,9 +146,13 @@ analysisJourney = createAnalysisJourneyController({
   documentRef: document,
   getShellSnapshot: () => shell.getSnapshot()
 });
+analysisAi = createAnalysisAiController({
+  documentRef: document
+});
 analysisStats.handleSnapshot(shell.getSnapshot());
 analysisInteraction.handleSnapshot(shell.getSnapshot());
 analysisJourney.handleSnapshot(shell.getSnapshot());
+analysisAi.handleSnapshot(shell.getSnapshot());
 
 $('connect').addEventListener('click', async () => {
   state.busy = true;
