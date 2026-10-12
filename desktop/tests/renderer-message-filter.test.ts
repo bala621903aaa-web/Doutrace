@@ -324,15 +324,19 @@ it('ignores a pending page response after navigating to a quoted message on the 
 
 it('cancels an untriggered search debounce when navigating to a loaded reference', async () => {
   vi.useFakeTimers();
-  const search = dom.window.document.getElementById('search') as HTMLInputElement;
-  search.value = '延迟搜索';
-  search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
-  clickReference('2', '1');
-  await vi.advanceTimersByTimeAsync(300);
-  expect(search.value).toBe('');
-  expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
-  expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
-  expect(getMessages).toHaveBeenCalledTimes(1);
+  try {
+    const search = dom.window.document.getElementById('search') as HTMLInputElement;
+    search.value = '延迟搜索';
+    search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+    clickReference('2', '1');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(search.value).toBe('');
+    expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
+    expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
+    expect(getMessages).toHaveBeenCalledTimes(1);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('does not highlight a new conversation with a stale quoted-target response', async () => {
@@ -406,4 +410,120 @@ it('pins accountId and conversationId for AI insights without following a later 
   expect(document.querySelector('[data-analysis-tab="ai"]')?.getAttribute('aria-selected')).toBe('true');
   expect(analysis?.dataset.analysisAccount).toBe('account');
   expect(analysis?.dataset.analysisConversation).toBe('other');
+});
+
+// Use the built Renderer event bridge without changing the existing fixture or cases.
+async function loadContextEventFixture() {
+  dom.window.close();
+  const context = {
+    account: { accountId: 'account', source: 'test' }, conversations: [],
+    archivedConversations: [
+      { accountId: 'account', conversationId: 'other', title: '当前选择', messageCount: 5 }
+    ],
+    collector: { state: 'idle' }, repair: { running: false, lastResult: null }, exporting: false
+  };
+  const app = { acquisitionEnabled: false, connected: false, browserStatus: '初始离线' };
+  const getState = vi.fn(async () => app);
+  let emit!: (value: typeof context) => void;
+  getMessages.mockClear();
+  const loaded = await loadRenderer(window => {
+    Object.assign(window, { CSS: { escape: (value: string) => value }, desktopArchive: {
+      getState, getContext: async () => context, getMessages,
+      getAttachments: async () => [],
+      onEvent: (callback: typeof emit) => { emit = callback; return () => {}; }
+    } });
+  });
+  dom = loaded.dom;
+  await vi.waitFor(() => expect(visibleIds()).toHaveLength(messages.length));
+  expect(loaded.resourceErrors).toEqual([]);
+  expect(getMessages).toHaveBeenCalledTimes(1);
+  const updated = {
+    ...context,
+    archivedConversations: [
+      { ...context.archivedConversations[0], title: '事件更新后的选择', messageCount: 17 },
+      { accountId: 'account', conversationId: 'new', title: '事件新增档案', messageCount: 1 }
+    ]
+  };
+  return { emit, updated, getState, app };
+}
+
+it('reloads the selected messages after a context event while archive is visible', async () => {
+  const { emit, updated, getState, app } = await loadContextEventFixture();
+  expect((dom.window.document.getElementById('chat-archive-page') as HTMLElement).hidden).toBe(false);
+  getState.mockResolvedValueOnce({ ...app, browserStatus: '事件状态' });
+  emit(updated);
+  await vi.waitFor(() => expect(getMessages).toHaveBeenCalledTimes(2));
+  expect(getMessages).toHaveBeenLastCalledWith({ accountId: 'account', conversationId: 'other', query: '', limit: 500, offset: 0 });
+  expect(dom.window.document.getElementById('archiveTitle')?.textContent).toBe('事件更新后的选择');
+  expect(dom.window.document.getElementById('status')?.textContent).toContain('事件状态');
+});
+
+it('updates hidden archive state and lists without loading, then reloads current selection exactly once on return', async () => {
+  const { emit, updated, getState, app } = await loadContextEventFixture();
+  const document = dom.window.document;
+  document.querySelector<HTMLButtonElement>('[data-route="analysis"]')!.click();
+  expect((document.getElementById('chat-archive-page') as HTMLElement).hidden).toBe(true);
+  getState.mockResolvedValueOnce({ ...app, browserStatus: '隐藏期间更新' });
+  emit(updated);
+  await vi.waitFor(() => expect(document.getElementById('archiveTitle')?.textContent).toBe('事件更新后的选择'));
+  expect(document.getElementById('archiveCount')?.textContent).toBe('2');
+  expect(document.querySelector('[data-archive="new"]')?.textContent).toContain('事件新增档案');
+  expect(document.getElementById('archiveMeta')?.textContent).toContain('17');
+  expect(document.getElementById('status')?.textContent).toContain('隐藏期间更新');
+  expect(getMessages).toHaveBeenCalledTimes(1);
+  document.querySelector<HTMLButtonElement>('[data-route="archive"]')!.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect((document.getElementById('chat-archive-page') as HTMLElement).hidden).toBe(false);
+  expect(getMessages).toHaveBeenCalledTimes(2);
+  expect(getMessages).toHaveBeenLastCalledWith({ accountId: 'account', conversationId: 'other', query: '', limit: 500, offset: 0 });
+  expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
+});
+
+it('keeps hidden context events cancelling debounce and invalidating an in-flight page response', async () => {
+  try {
+    const { emit, updated } = await loadContextEventFixture();
+    const document = dom.window.document;
+    document.querySelector<HTMLButtonElement>('[data-route="analysis"]')!.click();
+    const pendingPage = deferred<typeof messages>();
+    getMessages.mockImplementationOnce(() => pendingPage.promise);
+    const next = document.getElementById('next') as HTMLButtonElement;
+    next.disabled = false;
+    next.click();
+    expect(getMessages).toHaveBeenCalledTimes(2);
+    emit(updated);
+    await vi.waitFor(() => expect(document.getElementById('archiveTitle')?.textContent).toBe('事件更新后的选择'));
+    pendingPage.resolve([{ ...messages[0], messagePk: 'stale-page', platformMessageId: 'stale' }]);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
+    expect(document.getElementById('pageInfo')?.textContent).toContain('第 1～5 条');
+    expect(getMessages).toHaveBeenCalledTimes(2);
+
+    vi.useFakeTimers();
+    const search = document.getElementById('search') as HTMLInputElement;
+    search.value = '待取消搜索';
+    search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+    emit(updated);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(getMessages).toHaveBeenCalledTimes(2);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('rejects a stale context event when its getState response arrives after a newer event', async () => {
+  const { emit, updated, getState, app } = await loadContextEventFixture();
+  const document = dom.window.document;
+  document.querySelector<HTMLButtonElement>('[data-route="analysis"]')!.click();
+  const staleState = deferred<typeof app>();
+  getState.mockImplementationOnce(() => staleState.promise);
+  emit({ ...updated, archivedConversations: [{ ...updated.archivedConversations[0], title: '过期上下文' }] });
+  getState.mockResolvedValueOnce({ ...app, browserStatus: '最新状态' });
+  emit(updated);
+  await vi.waitFor(() => expect(document.getElementById('archiveTitle')?.textContent).toBe('事件更新后的选择'));
+  staleState.resolve({ ...app, browserStatus: '过期状态' });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(document.getElementById('archiveTitle')?.textContent).toBe('事件更新后的选择');
+  expect(document.getElementById('status')?.textContent).toContain('最新状态');
+  expect(document.getElementById('archiveCount')?.textContent).toBe('2');
+  expect(getMessages).toHaveBeenCalledTimes(1);
 });

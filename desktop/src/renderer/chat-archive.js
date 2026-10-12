@@ -264,7 +264,7 @@ export function createChatArchiveController({ api, state, $, esc, setStatus, ren
     state.context = context;
     state.app = app;
     render();
-    if (state.selectedId) void loadMessages();
+    if (state.selectedId && !$('chat-archive-page').hidden) void loadMessages();
   }
 
   function initialize() {
