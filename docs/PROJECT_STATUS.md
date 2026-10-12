@@ -150,7 +150,7 @@ P1-b2 同目录另有 `root-tests.json`、`desktop-tests.json`、最终 `electro
 
 实现变化（已完成/部分/尚未实现）：总览接线保持。互动表面只读展示既有统计字段，并标明 senderName 回退不是身份。未做新指标口径、采集、旅程或 AI。
 
-验证：以本刀桌面 `check` / `test` / `git diff --check` / `build:dev` 的实际输出为准（见 PR）。本轮没有新的 Electron Integration 证据包，不把自动化通过写成 P1、RELEASE 或 Electron PASS。
+验证：`npm --prefix desktop run check` 通过。`npm --prefix desktop test` 为 30 个文件、195 通过 / 0 失败 / 0 跳过。`git diff --check` 通过（工作区，以及相对 `ee9621156e567830e250053a5d8454389e5d539c` 的提交范围）。`npm --prefix desktop run build:dev` 通过。本轮没有新的 Electron Integration 证据包，不把自动化通过写成 P1、RELEASE 或 Electron PASS。
 
 证据：Git 提交 SHA 与自动化日志。没有新的 Electron 截图原件。
 
