@@ -128,20 +128,22 @@ it('shows the interaction panel only on the interaction tab and only requests a 
   expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('尚未');
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="journey"]')!.click();
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="ai"]')!.click();
-  expect(getConversationStats).not.toHaveBeenCalled();
+  expect(getConversationStats).toHaveBeenCalledTimes(1);
   expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(true);
+  expect(document.getElementById('analysis-journey-content')?.hasAttribute('hidden')).toBe(true);
   expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('尚未');
 
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="interaction"]')!.click();
-  await vi.waitFor(() => expect(getConversationStats).toHaveBeenCalledTimes(1));
+  await vi.waitFor(() => expect(getConversationStats).toHaveBeenCalledTimes(2));
   expect(getConversationStats).toHaveBeenCalledWith({ accountId: 'account', conversationId: 'conversation' });
   await vi.waitFor(() => expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(false));
   expect(document.getElementById('analysis-stats-content')?.hasAttribute('hidden')).toBe(true);
+  expect(document.getElementById('analysis-journey-content')?.hasAttribute('hidden')).toBe(true);
 
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="overview"]')!.click();
   await vi.waitFor(() => expect(document.getElementById('analysis-stats-content')?.hasAttribute('hidden')).toBe(false));
   expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(true);
-  expect(getConversationStats).toHaveBeenCalledTimes(2);
+  expect(getConversationStats).toHaveBeenCalledTimes(3);
   dom.window.close();
 });
 
@@ -177,7 +179,8 @@ it('renders existing kind, day, and sender bucket fields and keeps initiative me
 
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="journey"]')!.click();
   expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(true);
-  expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('尚未');
+  expect(document.getElementById('analysis-journey-content')?.hasAttribute('hidden')).toBe(true);
+  expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('正在统计');
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="ai"]')!.click();
   expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(true);
   expect(document.getElementById('analysis-tab-empty')?.textContent).toBe('AI 洞察尚未提供真实分析服务，不会显示示例回答。');
@@ -199,16 +202,16 @@ it('drops an in-flight interaction response after leaving the tab', async () => 
 
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="journey"]')!.click();
   expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(true);
-  expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('尚未');
+  expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('正在统计');
   pending.resolve(dto('account', 'conversation', stale));
   await pending.promise;
   await new Promise(resolve => setTimeout(resolve, 30));
   expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(true);
   expect(document.getElementById('analysis-interaction-kinds')?.textContent ?? '').not.toContain('77');
-  expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('尚未');
+  expect(document.getElementById('analysis-journey-total')?.textContent).not.toBe('77');
 
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="interaction"]')!.click();
-  await vi.waitFor(() => expect(getConversationStats).toHaveBeenCalledTimes(2));
+  await vi.waitFor(() => expect(getConversationStats).toHaveBeenCalledTimes(3));
   await vi.waitFor(() => expect(document.querySelector<HTMLElement>('[data-kind="text"]')?.textContent).toBe('5'));
   expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(false);
   dom.window.close();
@@ -230,7 +233,7 @@ it('covers zero-message and failure paths without sample interaction numbers', a
   expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(false);
   expect(document.getElementById('analysis-tab-panel')?.textContent).not.toContain('page-body-SECRET');
 
-  document.querySelector<HTMLButtonElement>('[data-analysis-tab="journey"]')!.click();
+  document.querySelector<HTMLButtonElement>('[data-analysis-tab="ai"]')!.click();
   document.querySelector<HTMLButtonElement>('[data-analysis-tab="interaction"]')!.click();
   await vi.waitFor(() => expect(getConversationStats).toHaveBeenCalledTimes(2));
   await vi.waitFor(() => expect(document.getElementById('analysis-tab-empty')?.textContent).toContain('失败'));

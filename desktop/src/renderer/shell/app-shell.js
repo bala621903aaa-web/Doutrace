@@ -11,7 +11,7 @@ const analysisTabLabels = Object.freeze({
 const analysisTabStatus = Object.freeze({
   overview: '请先在聊天档案中选择会话，点击「分析此会话」，再切换到总览。',
   interaction: '请先在聊天档案中选择会话，点击「分析此会话」，再切换到互动分析。',
-  journey: '聊天旅程尚未提供可追溯的归档事件。',
+  journey: '请先在聊天档案中选择会话，点击「分析此会话」，再切换到聊天旅程。',
   ai: 'AI 洞察尚未提供真实分析服务，不会显示示例回答。'
 });
 
