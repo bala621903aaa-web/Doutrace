@@ -1,6 +1,6 @@
 # DouTrace 项目状态
 
-最后核对：**2026-10-13（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。PR #1/#3/#2 已合入历史集成提交 `fd3e267048dcba241e96b2331183e21e4c1ec6de`（合并提交依次为 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`、`2f7ce75810385140952012c3302c214d3b1e785b`、`d79fde30f4f1dc95cedec032302a3306651584fa`）；PR #4 合入过时「未合并」表述后已纠正。PR #5（全会话统计契约与总览接线）已合入当前集成 HEAD `ee9621156e567830e250053a5d8454389e5d539c`。本刀 `analysis-interaction-stats-surface` 只把互动标签接到已有 `ConversationStats` 字段。下文源码/测试路径均相对于仓库根目录，桌面代码统一使用 `desktop/src/`、`desktop/tests/` 前缀。
+最后核对：**2026-10-13（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。PR #1/#3/#2 已合入历史集成提交 `fd3e267048dcba241e96b2331183e21e4c1ec6de`（合并提交依次为 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`、`2f7ce75810385140952012c3302c214d3b1e785b`、`d79fde30f4f1dc95cedec032302a3306651584fa`）；PR #4 合入过时「未合并」表述后已纠正。PR #5（全会话统计契约与总览接线）已合入 `ee9621156e567830e250053a5d8454389e5d539c`。PR #6（互动标签复用已有统计字段）已合入集成基线 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7`。本刀 `analysis-journey-day-spine` 只把聊天旅程接到已有 `dailyCounts` 日脊。下文源码/测试路径均相对于仓库根目录，桌面代码统一使用 `desktop/src/`、`desktop/tests/` 前缀。
 
 ## 1. 基线与交付边界
 
@@ -9,14 +9,14 @@
 | UI 产品基线 | `15d6d9243c69d54488c0b96f6e55c63b79dcc3e0` |
 | 本地 UI 集成分支 | `codex/ui-v1-integration` |
 | 协作文档分支（历史） | `codex/docs-ai-collaboration`，从上述产品基线创建；该文档提交不改变产品基线 |
-| 已合入修复栈（代码） | 当前集成 HEAD `ee9621156e567830e250053a5d8454389e5d539c` 已含 PR #1/#3/#2/#5。#1 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`，#3 `2f7ce75810385140952012c3302c214d3b1e785b`，#2 `d79fde30f4f1dc95cedec032302a3306651584fa`，#5 合并提交即该 HEAD。合并事实不证明 Windows Electron / Integration 验收完成 |
-| 本刀开发分支 | `codex/analysis-interaction-stats-surface`（互动标签复用已有全会话统计 DTO）；本轮未核验新 Electron 证据 |
+| 已合入修复栈（代码） | 集成基线 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7` 已含 PR #1/#3/#2/#5/#6。#1 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`，#3 `2f7ce75810385140952012c3302c214d3b1e785b`，#2 `d79fde30f4f1dc95cedec032302a3306651584fa`，#5 `ee9621156e567830e250053a5d8454389e5d539c`，#6 合并提交即该基线。合并事实不证明 Windows Electron / Integration 验收完成 |
+| 本刀开发分支 | `codex/analysis-journey-day-spine`（聊天旅程日级归档脊，复用已有 `dailyCounts`）；本轮未核验新 Electron 证据 |
 | 版本 | Desktop `0.3.0`；根目录旧扩展 `0.2.0`，见各自 package.json |
 | 开发/发布资格 | `DEV_BASELINE_READY=YES`（离线继续开发）；`RELEASE_READY=NO` |
 | 正式 P1 | `inconclusive`；`implementationMatches=false`；`p2GateOpen=false` |
 | 开发模式 | `development-mode.json` 标记，真实连接/采集/在线补修和附件重试禁用；离线阅读/导出可用 |
 
-用户已告知此 UI 版本推送到 GitHub 并设为默认分支。未来任务必须重新核对实际 HEAD，不能由默认分支或草稿推导发布资格。本轮互动统计表面不改变 `DEV_BASELINE_READY`、`RELEASE_READY`、正式 P1、`implementationMatches` 或 `p2GateOpen`，也不开放采集、在线补修或附件重试。
+用户已告知此 UI 版本推送到 GitHub 并设为默认分支。未来任务必须重新核对实际 HEAD，不能由默认分支或草稿推导发布资格。本轮旅程日脊不改变 `DEV_BASELINE_READY`、`RELEASE_READY`、正式 P1、`implementationMatches` 或 `p2GateOpen`，也不开放采集、在线补修或附件重试。
 
 **历史文档冲突：**`HANDOFF.md` 的 2026-10-04 P1 PASS、`desktop/README.md` 的旧测试数量/未验项是当时快照。当前正式状态取 [P1 汇总](../desktop/P1-ACCEPTANCE-SUMMARY.md)及对应 JSON、真实发布校验源码；UI 后续合成验收不能使已失效的 P1 证据复活。本轮保留旧文档及报告原件。UI 路线中的“P2 聊天分析”是开发阶段名，不等于真实采集 P2 门已开放。
 
@@ -29,10 +29,10 @@
 | 已实现；阶段 PARTIAL | 暖白/暖棕只读聊天档案、会话列表、220ms 搜索、500 条分页、当前页组合筛选/计数/空态、引用定位及高亮 | `desktop/src/renderer/{chat-archive-view,chat-archive,message-view}.js`、`desktop/src/renderer/styles/archive.css`、`desktop/tests/renderer-message-filter.test.ts` |
 | 已完成离线功能验证 | 真实 Main/Preload/SQLite 的账号/会话隔离；相同昵称不同 ID 不混淆，缺 senderId/system 中性布局；内容转义 | `desktop/src/core/{archive-db,desktop-api}.ts`、`desktop/src/renderer/message-view.js`；P1-b2 身份验收 7 项 |
 | 已完成离线功能验证 | 本地图片解码、音视频时间推进；持续可见节点保持、隐藏暂停/不自动恢复、离页清理，图片/音频证据回读 | `desktop/src/core/attachment-service.ts`、`desktop/src/renderer/message-view.js`、媒体相关测试及 Electron 报告 |
-| 已完成基础模块 + 总览/互动接线 | `summarizeConversationStats` + 全会话四字段投影 + 窄只读 IPC + 总览最小展示 + 互动展示已有 `kindCounts` / `dailyCounts` / `senderCounts`；范围=指定 accountId+conversationId 已归档全部行；不读取正文。主动发起/回复间隔/中位数口径未定，仍诚实空态 | `desktop/src/core/{conversation-stats,conversation-stats-service,archive-db}.ts`、`desktop/src/{main.ts,preload.cjs}`、`desktop/src/renderer/{analysis-stats,analysis-interaction}.js`；自动化见对应测试。旅程/AI 仍空态 |
+| 已完成基础模块 + 总览/互动/旅程日脊接线 | `summarizeConversationStats` + 全会话四字段投影 + 窄只读 IPC + 总览最小展示 + 互动展示已有 `kindCounts` / `dailyCounts` / `senderCounts` + 旅程展示已有 `dailyCounts` 的上海时区升序日脊，并旁注 `totalMessages` / `unknownTimestampCount` / `invalidTimestampCount`；范围=指定 accountId+conversationId 已归档全部行；不读取正文。主动发起/回复间隔/中位数口径未定，仍诚实空态。逐条 `messagePk`、引用跳转和火花引擎未授权，仍诚实空态 | `desktop/src/core/{conversation-stats,conversation-stats-service,archive-db}.ts`、`desktop/src/{main.ts,preload.cjs}`、`desktop/src/renderer/{analysis-stats,analysis-interaction,analysis-journey}.js`；自动化见对应测试。AI 仍空态 |
 | 部分完成 | SQLite/分页采集/游标恢复/旧档案补修/附件队列/ZIP 导出代码和自动化存在；UI 管理入口保留 | `desktop/src/core/{collector,archive-repair,archive-export,attachment-service}.ts`；正式联网路径被门禁关闭，不表示当前真实采集获验收 |
 | 部分完成 | ZIP 导出服务测试存在，P1-b2 实际窗口只验取消保存对话框后状态恢复 | `desktop/tests/archive-export.test.ts`；未在该轮验证实际系统保存对话框和最终 ZIP 文件 |
-| 部分完成 | 总览与互动已接离线全会话真实统计中的既有字段；主动发起/回复间隔/中位数口径未定，聊天旅程与可追溯事件服务仍未实现 | `desktop/src/renderer/{analysis-stats,analysis-interaction}.js`；旅程/AI 与上述未定口径仍诚实空状态 |
+| 部分完成 | 总览、互动与旅程日脊已接离线全会话真实统计中的既有字段；主动发起/回复间隔/中位数口径未定；聊天旅程的逐条可追溯事件与火花引擎仍未实现 | `desktop/src/renderer/{analysis-stats,analysis-interaction,analysis-journey}.js`；未定口径、逐条追溯与 AI 仍诚实空状态 |
 | 代码已合入；独立 Integration 验收仍待 | 「分析此会话」最小上下文：有效 `accountId + conversationId` 时复制该对并进入聊天分析 → AI 洞察，固定后不随档案筛选改写；无稳定 ID 时禁用。AI 洞察仍是诚实空状态 | 已合入合并提交 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`（来源 `29a86de8…`）：`desktop/src/renderer/shell/app-shell.js`、`desktop/src/renderer/renderer.js`、`desktop/src/renderer/chat-archive-view.js`、[P1B1-SHELL-CONTRACT.md](../P1B1-SHELL-CONTRACT.md)。不以昵称替代 ID |
 | 尚未实现 | AI 检索/模型/持久化/固定来源快照/证据抽屉 | 未有 AI 服务；上述契约不发送归档数据，也不把空状态写成真实分析结果 |
 | 尚未实现 | 独立媒体管理、火花提醒引擎、设置功能页 | `desktop/src/renderer/index.html` 明确占位；已有档案媒体阅读不等于媒体管理完成 |
@@ -45,7 +45,7 @@
 - Main：`desktop/src/main.ts` 注册窄 IPC、SQLite/媒体/导出/采集服务，精确检查当前窗口主帧与本地 index.html；Preload：`desktop/src/preload.cjs` 只暴露 `desktopArchive`，类型在 `desktop/src/core/desktop-api.ts`。
 - 数据：`desktop/src/core/archive-db.ts` 的账号/会话范围、持久 `messagePk` 和平台消息 ID；`desktop/src/adapters/douyin-history-adapter.ts` 是受门禁保护的真实历史适配器。UI 不直接操作 SQL、文件系统或供应商密钥。
 - Renderer：原生 DOM/JS、本地 CSS，无新增前端框架。`desktop/src/renderer/renderer.js` 装配唯一控制器与管理事件；`desktop/src/renderer/chat-archive.js` 管理请求/选择/分页/引用；`desktop/src/renderer/message-view.js` 管理消息 DOM/媒体/筛选；视图与样式局部隔离。
-- Shell：单一受信任入口 URL + 内存导航，持久 module root 切 hidden，不重建档案根；契约见 [P1B1-SHELL-CONTRACT.md](../P1B1-SHELL-CONTRACT.md)。已含可选分析上下文，以及总览 `#analysis-stats-content`、互动 `#analysis-interaction-content` 边界。两者复用同一窄统计 IPC `archive-get-conversation-stats`，离开各自标签作废在途请求；DB 仍只投影 sender/kind/sentAtMs，本刀不新增 IPC。共享入口、IPC、schema、tokens 变更先由单一所有者固定，不能 A/B 并改。
+- Shell：单一受信任入口 URL + 内存导航，持久 module root 切 hidden，不重建档案根；契约见 [P1B1-SHELL-CONTRACT.md](../P1B1-SHELL-CONTRACT.md)。已含可选分析上下文，以及总览 `#analysis-stats-content`、互动 `#analysis-interaction-content`、旅程日脊 `#analysis-journey-content` 边界。三者复用同一窄统计 IPC `archive-get-conversation-stats`，离开各自标签作废在途请求；DB 仍只投影 sender/kind/sentAtMs，本刀不新增 IPC，也不新增事件表。共享入口、IPC、schema、tokens 变更先由单一所有者固定，不能 A/B 并改。
 - UI 冻结规则完整列于 [AGENTS.md](../AGENTS.md)：四个业务导航+底部设置、四分析标签、只读档案、单联系人 AI/固定来源/精确证据定位。设计目标不计入已实现能力。
 
 ## 4. 验收记录（历史执行，不是本轮重跑）
@@ -93,9 +93,11 @@ P1-b2 最终 35 项构成为历史阅读/媒体 21、Shell 3、真实身份/SQLi
 
 **已合入（analysis-stats-dto-contract，PR #5）：**离线全会话统计 DTO、窄 IPC 与总览最小接线已在 HEAD `ee9621156e567830e250053a5d8454389e5d539c`。senderName 回退仅是统计桶，不是可靠双方身份。
 
-**本刀（analysis-interaction-stats-surface）：**互动标签展示已有 `kindCounts`、`dailyCounts`、`senderCounts`。不新增 IPC/DB，不硬编码样例数字。主动发起、回复间隔、中位数口径未定，本刀保持诚实空态。旅程、AI/检索/模型/持久化仍未授权。`p2GateOpen` 保持 `false`。
+**已合入（analysis-interaction-stats-surface，PR #6）：**互动标签展示已有 `kindCounts`、`dailyCounts`、`senderCounts`。合并提交 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7`。不新增 IPC/DB，不硬编码样例数字。主动发起、回复间隔、中位数口径未定，保持诚实空态。该合并不是 P1、RELEASE 或 Windows Electron 验收 PASS。`p2GateOpen` 保持 `false`。
 
-后续路线（均未授权、未执行）：可追溯旅程 → AI 状态结构 → 经授权的检索/模型/持久化。主动发起、回复中位数的定义及模型/云端授权/历史保存方案仍须确认。没有本页授权就不自动开工。
+**本刀（analysis-journey-day-spine）：**聊天旅程用已有 `dailyCounts` 做上海时区按日升序的日级归档脊，并旁注 `totalMessages`、`unknownTimestampCount`、`invalidTimestampCount`。标明「日级归档脊，不是逐条事件追溯」。无可归日计数时诚实空态。`messagePk` 定位、引用跳转、火花提醒仍未授权。不新增 IPC/DB，不发明主动发起或回复中位数口径。AI/检索/模型/持久化仍未授权。`p2GateOpen` 保持 `false`。
+
+后续路线（均未授权、未执行）：逐条可追溯旅程（`messagePk` / 引用跳转）、火花引擎 → AI 状态结构 → 经授权的检索/模型/持久化。主动发起、回复中位数的定义及模型/云端授权/历史保存方案仍须确认。没有本页授权就不自动开工。
 
 ## 6. 证据来源与可用性
 
@@ -141,6 +143,24 @@ P1-b2 同目录另有 `root-tests.json`、`desktop-tests.json`、最终 `electro
 替代哪条历史记录、为什么（不删除原件）：
 ```
 
+
+### 2026-10-13 旅程日脊登记（不是完整 Electron 阶段验收）
+
+日期/时区：2026-10-13（Asia/Shanghai）。
+
+产品基线完整 SHA / 分支 / 本轮范围：UI 产品基线仍为 `15d6d9243c69d54488c0b96f6e55c63b79dcc3e0`。集成父提交 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7`（PR #6 已合入）。本刀分支 `codex/analysis-journey-day-spine`：聊天旅程复用 `getConversationStats` 的 `dailyCounts`，按上海时区日期升序展示「日期 · 条数」，并旁注 `totalMessages`、`unknownTimestampCount`、`invalidTimestampCount`。逐条事件追溯未授权。
+
+实现变化（已完成/部分/尚未实现）：总览与互动接线保持。旅程只增加日级归档脊；无 `dailyCounts` 可归日时为空态。`messagePk` 定位、引用跳转、火花提醒、主动发起/回复中位数、采集、AI/检索/模型/持久化未做。
+
+验证：`npm --prefix desktop run check`、`npm --prefix desktop test`、`git diff --check`、`npm --prefix desktop run build:dev` 的通过/失败/跳过数量在本刀验收命令完成后补入本条。本轮没有新的 Electron Integration 证据包，不把自动化通过写成 P1、RELEASE 或 Electron PASS。
+
+证据：Git 提交 SHA 与自动化日志。没有新的 Electron 截图原件。
+
+正式门状态 / 风险编号变化 / 未验事项：`DEV_BASELINE_READY=YES`，`RELEASE_READY=NO`，正式 P1 仍 `inconclusive`，`implementationMatches=false`，`p2GateOpen=false`。R2/R3/R4 仍是代码已合入、验收仍待。
+
+下一任务、所有者、共享契约与必要授权：逐条可追溯旅程与火花引擎，以及主动发起/回复中位数口径，仍需单独授权。
+
+替代哪条历史记录、为什么（不删除原件）：补充下一条「互动统计表面登记」里「旅程仍空态」的范围。该条对 PR #6 互动表面仍然有效；旅程日脊以本条为准。P1-b2 PARTIAL 与竞态原件不改。
 
 ### 2026-10-13 互动统计表面登记（不是完整 Electron 阶段验收）
 

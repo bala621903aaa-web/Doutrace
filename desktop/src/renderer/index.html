@@ -46,7 +46,7 @@
             <header class="module-heading">
               <p class="module-heading__eyebrow">按已归档内容查看</p>
               <h1 id="analysis-module-title">聊天分析</h1>
-              <p>从真实归档消息出发。总览与互动分析展示已归档统计；聊天旅程和 AI 洞察仍未接入。</p>
+              <p>从真实归档消息出发。总览、互动分析与聊天旅程的日级归档脊展示已归档统计；逐条事件追溯和 AI 洞察仍未接入。</p>
             </header>
             <div class="analysis-tablist" role="tablist" aria-label="聊天分析标签">
               <button id="analysis-tab-overview" class="analysis-tab" type="button" role="tab" data-analysis-tab="overview" aria-controls="analysis-tab-panel" aria-selected="true" tabindex="0">总览</button>
@@ -84,6 +84,23 @@
                   <p id="analysis-interaction-gap-copy"></p>
                 </section>
                 <button id="analysis-interaction-retry" class="analysis-stats__retry" type="button" hidden>重试</button>
+              </div>
+              <div id="analysis-journey-content" class="analysis-stats analysis-interaction" hidden>
+                <p id="analysis-journey-scope" class="analysis-stats__scope"></p>
+                <p id="analysis-journey-pair" class="analysis-stats__pair"></p>
+                <p id="analysis-journey-spine-note" class="analysis-stats__note"></p>
+                <dl class="analysis-stats__metrics">
+                  <div><dt>已归档消息数</dt><dd id="analysis-journey-total">—</dd></div>
+                  <div><dt>未知时间戳</dt><dd id="analysis-journey-unknown-time">—</dd></div>
+                  <div><dt>无效时间戳</dt><dd id="analysis-journey-invalid-time">—</dd></div>
+                </dl>
+                <h3 class="analysis-interaction__heading">按日归档脊</h3>
+                <ul id="analysis-journey-days" class="analysis-interaction__list"></ul>
+                <section id="analysis-journey-events" class="analysis-interaction__gap">
+                  <h3>逐条事件追溯</h3>
+                  <p id="analysis-journey-events-copy"></p>
+                </section>
+                <button id="analysis-journey-retry" class="analysis-stats__retry" type="button" hidden>重试</button>
               </div>
             </section>
           </section>
