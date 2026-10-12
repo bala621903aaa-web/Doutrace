@@ -324,15 +324,19 @@ it('ignores a pending page response after navigating to a quoted message on the 
 
 it('cancels an untriggered search debounce when navigating to a loaded reference', async () => {
   vi.useFakeTimers();
-  const search = dom.window.document.getElementById('search') as HTMLInputElement;
-  search.value = '延迟搜索';
-  search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
-  clickReference('2', '1');
-  await vi.advanceTimersByTimeAsync(300);
-  expect(search.value).toBe('');
-  expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
-  expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
-  expect(getMessages).toHaveBeenCalledTimes(1);
+  try {
+    const search = dom.window.document.getElementById('search') as HTMLInputElement;
+    search.value = '延迟搜索';
+    search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+    clickReference('2', '1');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(search.value).toBe('');
+    expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
+    expect(dom.window.document.querySelector('[data-platform-id="1"]')?.classList.contains('target-message')).toBe(true);
+    expect(getMessages).toHaveBeenCalledTimes(1);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('does not highlight a new conversation with a stale quoted-target response', async () => {
@@ -476,30 +480,34 @@ it('updates hidden archive state and lists without loading, then reloads current
 });
 
 it('keeps hidden context events cancelling debounce and invalidating an in-flight page response', async () => {
-  const { emit, updated } = await loadContextEventFixture();
-  const document = dom.window.document;
-  document.querySelector<HTMLButtonElement>('[data-route="analysis"]')!.click();
-  const pendingPage = deferred<typeof messages>();
-  getMessages.mockImplementationOnce(() => pendingPage.promise);
-  const next = document.getElementById('next') as HTMLButtonElement;
-  next.disabled = false;
-  next.click();
-  expect(getMessages).toHaveBeenCalledTimes(2);
-  emit(updated);
-  await vi.waitFor(() => expect(document.getElementById('archiveTitle')?.textContent).toBe('事件更新后的选择'));
-  pendingPage.resolve([{ ...messages[0], messagePk: 'stale-page', platformMessageId: 'stale' }]);
-  await new Promise(resolve => setTimeout(resolve, 0));
-  expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
-  expect(document.getElementById('pageInfo')?.textContent).toContain('第 1～5 条');
-  expect(getMessages).toHaveBeenCalledTimes(2);
+  try {
+    const { emit, updated } = await loadContextEventFixture();
+    const document = dom.window.document;
+    document.querySelector<HTMLButtonElement>('[data-route="analysis"]')!.click();
+    const pendingPage = deferred<typeof messages>();
+    getMessages.mockImplementationOnce(() => pendingPage.promise);
+    const next = document.getElementById('next') as HTMLButtonElement;
+    next.disabled = false;
+    next.click();
+    expect(getMessages).toHaveBeenCalledTimes(2);
+    emit(updated);
+    await vi.waitFor(() => expect(document.getElementById('archiveTitle')?.textContent).toBe('事件更新后的选择'));
+    pendingPage.resolve([{ ...messages[0], messagePk: 'stale-page', platformMessageId: 'stale' }]);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(visibleIds()).toEqual(['1', '2', '3', '4', '5']);
+    expect(document.getElementById('pageInfo')?.textContent).toContain('第 1～5 条');
+    expect(getMessages).toHaveBeenCalledTimes(2);
 
-  vi.useFakeTimers();
-  const search = document.getElementById('search') as HTMLInputElement;
-  search.value = '待取消搜索';
-  search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
-  emit(updated);
-  await vi.advanceTimersByTimeAsync(300);
-  expect(getMessages).toHaveBeenCalledTimes(2);
+    vi.useFakeTimers();
+    const search = document.getElementById('search') as HTMLInputElement;
+    search.value = '待取消搜索';
+    search.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+    emit(updated);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(getMessages).toHaveBeenCalledTimes(2);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it('rejects a stale context event when its getState response arrives after a newer event', async () => {
