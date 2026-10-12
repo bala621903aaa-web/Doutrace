@@ -14,7 +14,7 @@ export const chatArchiveMarkup = [
   '  <section class="archive-reader" aria-label="档案阅读区">',
   '    <header class="archive-reader__header">',
   '      <div class="archive-reader__identity"><span id="archiveAvatar" class="archive-avatar archive-avatar--header" aria-hidden="true">档</span><div class="archive-reader__identity-text"><h2 id="archiveTitle">选择一份档案</h2><p id="archiveMeta">本机只读聊天记录</p></div></div>',
-  '      <div class="archive-reader__actions"><button id="export" type="button">导出 ZIP</button><details class="archive-management"><summary>档案工具</summary><div class="archive-management__panel">',
+  '      <div class="archive-reader__actions"><button id="analyzeConversation" type="button" disabled>分析此会话</button><button id="export" type="button">导出 ZIP</button><details class="archive-management"><summary>档案工具</summary><div class="archive-management__panel">',
   '        <h3>归档与采集</h3><p class="muted">浏览器登录与选会话在独立窗口完成；保存的消息及附件留在本机。</p>',
   '        <div class="archive-management__row"><button class="primary" id="connect">连接独立浏览器</button><button id="refresh">刷新会话</button></div>',
   '        <p class="status" id="status">正在初始化…</p><div class="notice" id="notice">先在浏览器选定一条私聊，再刷新会话并开始保存。消息和附件保存在本机；停止后可以继续。</div>',

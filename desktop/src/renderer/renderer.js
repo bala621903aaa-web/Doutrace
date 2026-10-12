@@ -1,6 +1,6 @@
 import { createChatArchiveController } from './chat-archive.js';
 import { chatArchiveMarkup } from './chat-archive-view.js';
-import { mountAppShell } from './shell/app-shell.js';
+import { isStableAnalysisContext, mountAppShell, navigateAppShell } from './shell/app-shell.js';
 
 const api = window.desktopArchive;
 const state = {
@@ -80,9 +80,18 @@ function renderCollector() {
       : '选择当前账号下的档案，并在独立浏览器选中同一私聊后使用。';
 }
 
+function syncAnalyzeConversationAction() {
+  const snapshot = chatArchive.getSnapshot();
+  $('analyzeConversation').disabled = !isStableAnalysisContext({
+    accountId: snapshot.accountId,
+    conversationId: snapshot.conversationId
+  });
+}
+
 function render() {
   chatArchive.renderLists();
   renderCollector();
+  syncAnalyzeConversationAction();
   const account = state.context.account;
   const appStatus = state.app?.browserStatus || '尚未连接独立浏览器';
   if (state.app?.message) {
@@ -188,6 +197,19 @@ $('export').addEventListener('click', async () => {
     render();
     setStatus(error.message || String(error), true);
   }
+});
+
+$('analyzeConversation').addEventListener('click', () => {
+  const snapshot = chatArchive.getSnapshot();
+  const analysisContext = {
+    accountId: snapshot.accountId,
+    conversationId: snapshot.conversationId
+  };
+  if (!isStableAnalysisContext(analysisContext)) {
+    syncAnalyzeConversationAction();
+    return;
+  }
+  navigateAppShell('analysis', 'ai', analysisContext);
 });
 
 api.onEvent(context => { void chatArchive.handleContextEvent(context); });
