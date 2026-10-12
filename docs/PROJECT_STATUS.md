@@ -1,6 +1,6 @@
 # DouTrace 项目状态
 
-最后核对：**2026-10-12（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。协作文档建立时只读核对源码/已有证据；本次小范围修订仅澄清流程、路径和维护责任，没有重跑业务测试或 Electron。下文源码/测试路径均相对于仓库根目录，桌面代码统一使用 `desktop/src/`、`desktop/tests/` 前缀。
+最后核对：**2026-10-12（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。协作文档建立时只读核对源码/已有证据；此前小范围修订仅澄清流程、路径和维护责任。同日状态修订只登记 R2/R3/R4 已由未合并草稿 PR 处理，并改写下一独立开发任务；这些文档工作都没有重跑业务测试或 Electron，也不把草稿 PR 记成已合并或已验收。下文源码/测试路径均相对于仓库根目录，桌面代码统一使用 `desktop/src/`、`desktop/tests/` 前缀。
 
 ## 1. 基线与交付边界
 
@@ -8,13 +8,17 @@
 | --- | --- |
 | UI 产品基线 | `15d6d9243c69d54488c0b96f6e55c63b79dcc3e0` |
 | 本地 UI 集成分支 | `codex/ui-v1-integration` |
-| 本轮文档分支 | `codex/docs-ai-collaboration`，从上述提交创建；文档提交不改变产品基线 |
+| 协作文档分支（历史） | `codex/docs-ai-collaboration`，从上述产品基线创建；该文档提交不改变产品基线 |
+| 未合并修复栈（本页登记） | 栈顶 `f38df49b43628d28ab31e94190d0b1f1504cfc9d`（`codex/r2-media-sources-generation-guard`，草稿 PR #2）。其下 PR #3 `a919946d9bae1e632748f3bf51a2798715cb930e`，PR #1 `29a86de8f8fe220f553b6c59330e89a675163956`。建议合并顺序 **#1 → #3 → #2**。尚未合并，待明早 Windows Electron / Integration 验收；今晚不合并 |
+| 本轮状态文档分支 | `docs/project-status-r2r3r4-close`，从上述栈顶创建；只修订本文件 |
 | 版本 | Desktop `0.3.0`；根目录旧扩展 `0.2.0`，见各自 package.json |
 | 开发/发布资格 | `DEV_BASELINE_READY=YES`（离线继续开发）；`RELEASE_READY=NO` |
 | 正式 P1 | `inconclusive`；`implementationMatches=false`；`p2GateOpen=false` |
 | 开发模式 | `development-mode.json` 标记，真实连接/采集/在线补修和附件重试禁用；离线阅读/导出可用 |
 
-用户已告知此 UI 版本推送到 GitHub 并设为默认分支；本轮没有访问远端核验默认分支，也不执行 push/merge。未来任务必须重新核对实际 HEAD，不能由默认分支推导发布资格。
+用户已告知此 UI 版本推送到 GitHub 并设为默认分支。协作文档建立时没有访问远端核验默认分支，也不执行 push/merge。本次状态修订核对了当时仍打开的草稿 PR #1、#3、#2 及其完整 SHA，只开文档草稿 PR，不合并、不改默认分支。未来任务必须重新核对实际 HEAD，不能由默认分支或未合并草稿推导发布资格。
+
+本次状态修订不改变 `DEV_BASELINE_READY`、`RELEASE_READY`、正式 P1、`implementationMatches` 或 `p2GateOpen`，也不开放采集、在线补修或附件重试。
 
 **历史文档冲突：**`HANDOFF.md` 的 2026-10-04 P1 PASS、`desktop/README.md` 的旧测试数量/未验项是当时快照。当前正式状态取 [P1 汇总](../desktop/P1-ACCEPTANCE-SUMMARY.md)及对应 JSON、真实发布校验源码；UI 后续合成验收不能使已失效的 P1 证据复活。本轮保留旧文档及报告原件。UI 路线中的“P2 聊天分析”是开发阶段名，不等于真实采集 P2 门已开放。
 
@@ -31,7 +35,8 @@
 | 部分完成 | SQLite/分页采集/游标恢复/旧档案补修/附件队列/ZIP 导出代码和自动化存在；UI 管理入口保留 | `desktop/src/core/{collector,archive-repair,archive-export,attachment-service}.ts`；正式联网路径被门禁关闭，不表示当前真实采集获验收 |
 | 部分完成 | ZIP 导出服务测试存在，P1-b2 实际窗口只验取消保存对话框后状态恢复 | `desktop/tests/archive-export.test.ts`；未在该轮验证实际系统保存对话框和最终 ZIP 文件 |
 | 尚未实现 | 总览/互动分析真实数据展示，主动发起/回复间隔指标，聊天旅程和可追溯事件服务 | `desktop/src/renderer/index.html`、`desktop/src/renderer/shell/app-shell.js` 仅四标签空状态 |
-| 尚未实现 | “分析此会话”完整上下文；AI 检索/模型/持久化/固定来源快照/证据抽屉 | 当前 `navigateAppShell(module, analysisTab?)` 无联系人上下文；未有 AI 服务 |
+| 代码在未合并草稿 PR #1；尚未 Integration 验收 | 「分析此会话」最小上下文：有效 `accountId + conversationId` 时复制该对并进入聊天分析 → AI 洞察，固定后不随档案筛选改写；无稳定 ID 时禁用。AI 洞察仍是诚实空状态 | PR #1 `29a86de8f8fe220f553b6c59330e89a675163956`：`desktop/src/renderer/shell/app-shell.js`、`desktop/src/renderer/renderer.js`、`desktop/src/renderer/chat-archive-view.js`、[P1B1-SHELL-CONTRACT.md](../P1B1-SHELL-CONTRACT.md) 及配套测试。不以昵称替代 ID；未合并 |
+| 尚未实现 | AI 检索/模型/持久化/固定来源快照/证据抽屉 | 未有 AI 服务；上述契约不发送归档数据，也不把空状态写成真实分析结果 |
 | 尚未实现 | 独立媒体管理、火花提醒引擎、设置功能页 | `desktop/src/renderer/index.html` 明确占位；已有档案媒体阅读不等于媒体管理完成 |
 | 历史原型 | 根目录 `src/`、`public/` Manifest V3 扩展；独立 IndexedDB/ZIP 路径 | 根 package.json `0.2.0`、`public/README.md`；不是当前桌面主线或正式 P1 证据 |
 
@@ -42,7 +47,7 @@
 - Main：`desktop/src/main.ts` 注册窄 IPC、SQLite/媒体/导出/采集服务，精确检查当前窗口主帧与本地 index.html；Preload：`desktop/src/preload.cjs` 只暴露 `desktopArchive`，类型在 `desktop/src/core/desktop-api.ts`。
 - 数据：`desktop/src/core/archive-db.ts` 的账号/会话范围、持久 `messagePk` 和平台消息 ID；`desktop/src/adapters/douyin-history-adapter.ts` 是受门禁保护的真实历史适配器。UI 不直接操作 SQL、文件系统或供应商密钥。
 - Renderer：原生 DOM/JS、本地 CSS，无新增前端框架。`desktop/src/renderer/renderer.js` 装配唯一控制器与管理事件；`desktop/src/renderer/chat-archive.js` 管理请求/选择/分页/引用；`desktop/src/renderer/message-view.js` 管理消息 DOM/媒体/筛选；视图与样式局部隔离。
-- Shell：单一受信任入口 URL + 内存导航，持久 module root 切 hidden，不重建档案根；契约见 [P1B1-SHELL-CONTRACT.md](../P1B1-SHELL-CONTRACT.md)。共享入口、IPC、schema、tokens 变更先由单一所有者固定，不能 A/B 并改。
+- Shell：单一受信任入口 URL + 内存导航，持久 module root 切 hidden，不重建档案根；契约见 [P1B1-SHELL-CONTRACT.md](../P1B1-SHELL-CONTRACT.md)。该契约现含可选分析上下文，对应实现在未合并草稿 PR #1，见第 5 节。共享入口、IPC、schema、tokens 变更先由单一所有者固定，不能 A/B 并改。
 - UI 冻结规则完整列于 [AGENTS.md](../AGENTS.md)：四个业务导航+底部设置、四分析标签、只读档案、单联系人 AI/固定来源/精确证据定位。设计目标不计入已实现能力。
 
 ## 4. 验收记录（历史执行，不是本轮重跑）
@@ -80,15 +85,17 @@ P1-b2 最终 35 项构成为历史阅读/媒体 21、Shell 3、真实身份/SQLi
 | 编号/级别 | 证据与影响边界 | 后续处理 |
 | --- | --- | --- |
 | R1 / 观察项 | 首次分页/引用高亮超时未解释；后续均通过，尚无可复现新回归 | 保留原件与备注；出现新复现时记录 DOM/IPC/时序，定向修复，不主动无限复测 |
-| R2 / MINOR | `desktop/src/renderer/chat-archive.js` 的 `loadMessages` 在代次校验前写 `mediaSources` | 独立修复任务：把缓存副作用纳入有效请求范围，补旧响应媒体测试；本轮未修 |
-| R3 / MINOR | `desktop/src/renderer/chat-archive.js` 的 `handleContextEvent` 在档案隐藏时可能发起无意义加载 | 独立任务按当前模块可见性约束，保持返回初始化；本轮未修 |
-| R4 / MINOR、能力缺口 | `desktop/src/renderer/shell/app-shell.js` 的 `navigateAppShell` 不传当前联系人上下文，“分析此会话”未接入 | 先做最小契约任务，再开展分析 UI；不以昵称替代稳定 ID |
+| R2 / MINOR，代码已处理、未合并 | 旧缺陷：`desktop/src/renderer/chat-archive.js` 的 `loadMessages` 在代次校验前写 `mediaSources`。草稿 PR #2 `f38df49b43628d28ab31e94190d0b1f1504cfc9d` 先记入本地映射，仅当前代次仍有效时才写入共享缓存，并补旧响应测试 | 待明早 Windows Electron / Integration 验收后，按 #1 → #3 → #2 合并。验收完成前不把本项记成已关闭的集成结论 |
+| R3 / MINOR，代码已处理、未合并 | 旧缺陷：同文件 `handleContextEvent` 在档案隐藏时可能发起加载。草稿 PR #3 `a919946d9bae1e632748f3bf51a2798715cb930e` 在 `#chat-archive-page` 隐藏时不调用 `loadMessages`；同分支另把测试假计时器恢复为真实计时器 | 同上。返回档案时是否仍按既有路径初始化，留待 Integration 验收核对 |
+| R4 / MINOR、能力缺口，最小契约已在草稿 PR #1、未合并 | 旧缺口：`desktop/src/renderer/shell/app-shell.js` 的 `navigateAppShell` 不传当前联系人。PR #1 `29a86de8f8fe220f553b6c59330e89a675163956` 已固定 `accountId + conversationId`。检索、模型、持久化、来源快照和证据抽屉仍未做 | 最小契约随 #1 先合；不以昵称替代稳定 ID。分析 UI 与模型不在本页授权范围内 |
 | R5 / 正式发布阻断 | P1 证据与当前实现不匹配，正式门关闭 | 需另行授权的真实证据工作；离线测试/文档不能解决或绕过 |
 | R6 / 环境限制 | Windows 缺 VS C++ 时 better-sqlite3 的 node-gyp 重编译可能失败 | 区分依赖环境与业务回归，先查锁文件/预构建/运行时兼容；系统工具需批准 |
 
-**建议下一独立开发任务（未执行）：**固定 `accountId + conversationId → 聊天分析 → AI 洞察`。最小范围为 `desktop/src/renderer/shell/app-shell.js`、`desktop/src/renderer/renderer.js`、`desktop/src/renderer/chat-archive-view.js`，配套 `desktop/tests/app-shell.test.ts`、`desktop/tests/renderer-message-filter.test.ts` 和 `P1B1-SHELL-CONTRACT.md`。取当前 `chatArchive.getSnapshot()`，校验/复制上下文、无有效选择时禁用，兼容既有导航；无需通用 IPC、Main/Preload 修改或模型服务。先单所有者完成契约，C 独立审查，Integration 验证，再安排下游。
+**未合并栈（2026-10-12 登记，今晚不合并）：**建议合并顺序为草稿 PR **#1**（壳层分析上下文 / R4，`29a86de8f8fe220f553b6c59330e89a675163956`）→ **#3**（R3 档案隐藏不加载，`a919946d9bae1e632748f3bf51a2798715cb930e`）→ **#2**（R2 `mediaSources` 代次守卫，`f38df49b43628d28ab31e94190d0b1f1504cfc9d`）。三者均待明早 Windows 上的真实 Electron 与 Integration 验收。`p2GateOpen` 保持 `false`；正式 P1 不改为 PASS；采集门不开放。
 
-后续路线：真实统计 DTO/范围与指标口径 → 总览/互动 → 可追溯旅程 → AI 状态结构 → 经授权的检索/模型/持久化。主动发起、回复中位数的定义及模型/云端授权/历史保存方案仍须确认。没有本页授权就不自动开工。
+**建议下一独立开发任务（未执行，需用户授权才开工）：**真实统计 DTO / 范围与指标口径。先确认统计只从已归档行生成、时间与会话范围如何界定、总览与互动各计哪些指标；数字和月份须由真实范围产生，不能硬编码设计样例，也不能把 `summarizeConversationStats` 的 senderName 回退当成可靠身份。没有本页授权就不自动开工。
+
+后续路线（均未授权、未执行）：总览/互动展示 → 可追溯旅程 → AI 状态结构 → 经授权的检索/模型/持久化。主动发起、回复中位数的定义及模型/云端授权/历史保存方案仍须确认。没有本页授权就不自动开工。
 
 ## 6. 证据来源与可用性
 
@@ -133,3 +140,21 @@ P1-b2 同目录另有 `root-tests.json`、`desktop-tests.json`、最终 `electro
 下一任务、所有者、共享契约与必要授权：
 替代哪条历史记录、为什么（不删除原件）：
 ```
+
+### 2026-10-12 状态登记（不是阶段集成验收）
+
+日期/时区：2026-10-12（Asia/Shanghai）。
+
+产品基线完整 SHA / 分支 / 本轮范围：UI 产品基线仍为 `15d6d9243c69d54488c0b96f6e55c63b79dcc3e0`。本轮只修订 `docs/PROJECT_STATUS.md`，登记未合并栈顶 `f38df49b43628d28ab31e94190d0b1f1504cfc9d`。
+
+实现变化（已完成/部分/尚未实现）：R4 最小上下文、R3 隐藏不加载、R2 `mediaSources` 代次守卫分别在草稿 PR #1 / #3 / #2，尚未合并。AI 检索/模型/持久化/证据抽屉与真实统计 UI 仍未实现。
+
+验证：本轮未重跑 `npm run check`、`npm test`、desktop check/test、`build:dev` 或 Electron。各 PR 自身的测试不记为本页重跑。
+
+证据：Git 提交 SHA 与草稿 PR 编号。没有新的 Electron 截图或验收原件。
+
+正式门状态 / 风险编号变化 / 未验事项：`DEV_BASELINE_READY=YES`，`RELEASE_READY=NO`，正式 P1 仍 `inconclusive`，`implementationMatches=false`，`p2GateOpen=false`。R2/R3/R4 改为代码已处理、待验收合并。明早 Windows Electron / Integration 验收仍待做。今晚不合并。
+
+下一任务、所有者、共享契约与必要授权：真实统计 DTO / 范围与指标口径。需用户授权才开工；没有本页授权就不自动开工。
+
+替代哪条历史记录、为什么（不删除原件）：替代第 5 节原先的「本轮未修」，以及原先把「固定分析上下文」列为下一独立开发任务的段落。该上下文任务已进入 PR #1，不再作为下一开工项。P1-b2 PARTIAL 与竞态原件不改。
