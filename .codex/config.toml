@@ -1,0 +1,11 @@
+[agents.developer_a]
+description = "DouTrace Agent A for approved data and backend tasks."
+config_file = "agents/developer-a.toml"
+
+[agents.developer_b]
+description = "DouTrace Agent B for approved Renderer and UI tasks."
+config_file = "agents/developer-b.toml"
+
+[agents.reviewer_c]
+description = "DouTrace independent read-only Reviewer C for exact commits and evidence."
+config_file = "agents/reviewer-c.toml"

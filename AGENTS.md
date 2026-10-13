@@ -20,6 +20,8 @@
 
 以上是任务分配规则，不表示这些后续功能已实现。每次开发派发必须附基线 SHA、文件清单、接口约定、验收标准与禁止范围。没有用户授权，不自动创建/派发 Agent 任务。
 
+本机角色调用、独立审查和集成审批的操作步骤见 [工作流](docs/WORKFLOW.md)，任务输入使用 [任务卡模板](docs/tasks/TEMPLATE.md)。项目级自定义 Agent 与 Skills 只是可调用入口，不自动创建独立 Worktree，也不授予合并或发布权限；运行前核对本次会话是否实际加载。
+
 - A、B 各用从批准提交创建的独立分支和 Worktree，C 不改开发工作树，Integration 使用独立集成树。不得借用原始项目或另一个 Agent 的脏工作区。
 - 可以并行：共享 DTO/身份/时间口径先冻结，A 做数据实现，B 在独立页面文件中消费契约；B 的 mock 不可冒充真实服务验收。先合 A/服务契约，再合 B，最后验证真实链路。
 - 必须串行：双方都要修改 `renderer.js`、`index.html`、`shell/app-shell.js`、`styles/tokens.css`、`archive-db.ts`、`desktop-api.ts`、`preload.cjs`、`main.ts` 或公共测试夹具。先做单所有者的小契约任务、审查和集成，再开放下游；不强求同时开发。
