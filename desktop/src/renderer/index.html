@@ -46,7 +46,7 @@
             <header class="module-heading">
               <p class="module-heading__eyebrow">按已归档内容查看</p>
               <h1 id="analysis-module-title">聊天分析</h1>
-              <p>从真实归档消息出发。总览、互动分析与聊天旅程的日级归档脊展示已归档统计；逐条事件追溯和 AI 洞察仍未接入。</p>
+              <p>从真实归档消息出发。总览、互动分析与聊天旅程的日级归档脊展示已归档统计；逐条事件追溯仍未授权。AI 洞察保持诚实空态：未授权检索、模型与持久化，当前不会分析，也不会展示示例回答。</p>
             </header>
             <div class="analysis-tablist" role="tablist" aria-label="聊天分析标签">
               <button id="analysis-tab-overview" class="analysis-tab" type="button" role="tab" data-analysis-tab="overview" aria-controls="analysis-tab-panel" aria-selected="true" tabindex="0">总览</button>
@@ -101,6 +101,15 @@
                   <p id="analysis-journey-events-copy"></p>
                 </section>
                 <button id="analysis-journey-retry" class="analysis-stats__retry" type="button" hidden>重试</button>
+              </div>
+              <div id="analysis-ai-content" class="analysis-stats analysis-ai" hidden>
+                <p id="analysis-ai-contract" class="analysis-stats__note">检索、模型和持久化尚未授权。当前不会分析，也不会展示示例回答，也不会把归档正文或统计送出本机。</p>
+                <p id="analysis-ai-state" class="analysis-stats__pair">尚未固定会话。请在聊天档案中点击「分析此会话」。</p>
+                <ul id="analysis-ai-limits" class="analysis-interaction__list">
+                  <li>检索尚未授权，不会检索归档正文。</li>
+                  <li>模型尚未授权，不会调用模型，也不会展示示例回答。</li>
+                  <li>持久化尚未授权，不会保存分析历史或来源快照。</li>
+                </ul>
               </div>
             </section>
           </section>

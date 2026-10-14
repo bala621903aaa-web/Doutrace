@@ -177,10 +177,13 @@ it('switches all modules, preserves selected navigation state, and exposes four 
       expect(emptyText).toContain('分析此会话');
     } else {
       expect(emptyText).toContain('尚未');
+      expect(emptyText).toContain('分析此会话');
+      expect(emptyText).toContain('不会展示示例回答');
     }
     expect(document.getElementById('analysis-stats-content')?.hasAttribute('hidden')).toBe(true);
     expect(document.getElementById('analysis-interaction-content')?.hasAttribute('hidden')).toBe(true);
     expect(document.getElementById('analysis-journey-content')?.hasAttribute('hidden')).toBe(true);
+    expect(document.getElementById('analysis-ai-content')?.hasAttribute('hidden')).toBe(tab.dataset.analysisTab !== 'ai');
     expect(document.getElementById('analysis-tab-panel')?.getAttribute('aria-labelledby')).toBe(tab.id);
     if (index > 0) expect(tabs[index - 1].tabIndex).toBe(-1);
   }

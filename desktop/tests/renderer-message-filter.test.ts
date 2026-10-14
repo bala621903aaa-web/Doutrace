@@ -447,7 +447,7 @@ it('pins accountId and conversationId for AI insights without following a later 
   expect(document.querySelector('[data-module="archive"]')?.hasAttribute('hidden')).toBe(true);
   expect(document.querySelector('[data-analysis-tab="ai"]')?.getAttribute('aria-selected')).toBe('true');
   expect(document.getElementById('analysis-tab-title')?.textContent).toBe('AI 洞察');
-  expect(document.getElementById('analysis-tab-empty')?.textContent).toBe('AI 洞察尚未提供真实分析服务，不会显示示例回答。');
+  expect(document.getElementById('analysis-tab-empty')?.textContent).toBe('此会话已固定，但没有可用的 AI 服务。检索、模型和持久化尚未授权，当前不会分析，也不会展示示例回答。');
   expect(analysis?.dataset.analysisAccount).toBe('account');
   expect(analysis?.dataset.analysisConversation).toBe('conversation');
   expect(analysis?.getAttribute('data-analysis-title')).toBeNull();
