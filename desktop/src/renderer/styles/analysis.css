@@ -5,6 +5,10 @@
   max-width: 42rem;
 }
 
+.analysis-stats[hidden] {
+  display: none;
+}
+
 .analysis-stats__scope,
 .analysis-stats__pair,
 .analysis-stats__note {
