@@ -243,6 +243,10 @@
   text-align: center;
 }
 
+.module-empty[hidden] {
+  display: none;
+}
+
 .placeholder-module {
   display: grid;
   min-height: 100%;
