@@ -1,6 +1,6 @@
 # DouTrace 项目状态
 
-最后核对：**2026-10-13（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。PR #1/#3/#2 已合入历史集成提交 `fd3e267048dcba241e96b2331183e21e4c1ec6de`（合并提交依次为 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`、`2f7ce75810385140952012c3302c214d3b1e785b`、`d79fde30f4f1dc95cedec032302a3306651584fa`）；PR #4 合入过时「未合并」表述后已纠正。PR #5（全会话统计契约与总览接线）已合入 `ee9621156e567830e250053a5d8454389e5d539c`。PR #6（互动标签复用已有统计字段）已合入集成基线 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7`。本刀 `analysis-journey-day-spine` 只把聊天旅程接到已有 `dailyCounts` 日脊。下文源码/测试路径均相对于仓库根目录，桌面代码统一使用 `desktop/src/`、`desktop/tests/` 前缀。
+最后核对：**2026-10-29（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。PR #1/#3/#2 已合入历史集成提交 `fd3e267048dcba241e96b2331183e21e4c1ec6de`（合并提交依次为 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`、`2f7ce75810385140952012c3302c214d3b1e785b`、`d79fde30f4f1dc95cedec032302a3306651584fa`）；PR #4 合入过时「未合并」表述后已纠正。PR #5（全会话统计契约与总览接线）已合入 `ee9621156e567830e250053a5d8454389e5d539c`。PR #6（互动标签复用已有统计字段）已合入集成基线 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7`。PR #7（旅程日脊）已合入基线。任务 P3（可采集会话目录与切换 `P3-conversation-directory-picker`）已合入集成提交 `8b1d2154468b47e79d573ea2d183e4fed71fc177`（Agent A: `b531aa694279d0b3f5043049d25e7fcb9732e089`，Agent B: `97c92530ccb56e4564f09a01aa2a80e5a6654705`）。下文源码/测试路径均相对于仓库根目录，桌面代码统一使用 `desktop/src/`、`desktop/tests/` 前缀。
 
 ## 1. 基线与交付边界
 
@@ -9,8 +9,8 @@
 | UI 产品基线 | `15d6d9243c69d54488c0b96f6e55c63b79dcc3e0` |
 | 本地 UI 集成分支 | `codex/ui-v1-integration` |
 | 协作文档分支（历史） | `codex/docs-ai-collaboration`，从上述产品基线创建；该文档提交不改变产品基线 |
-| 已合入修复栈（代码） | 集成基线 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7` 已含 PR #1/#3/#2/#5/#6。#1 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`，#3 `2f7ce75810385140952012c3302c214d3b1e785b`，#2 `d79fde30f4f1dc95cedec032302a3306651584fa`，#5 `ee9621156e567830e250053a5d8454389e5d539c`，#6 合并提交即该基线。合并事实不证明 Windows Electron / Integration 验收完成 |
-| 本刀开发分支 | `codex/analysis-journey-day-spine`（聊天旅程日级归档脊，复用已有 `dailyCounts`）；本轮未核验新 Electron 证据 |
+| 已合入修复栈（代码） | 包含 PR #1/#3/#2/#5/#6/#7，以及任务 P3-conversation-directory-picker（集成提交 `8b1d2154468b47e79d573ea2d183e4fed71fc177`，依次合入 Agent A `b531aa694279d0b3f5043049d25e7fcb9732e089` 与 Agent B `97c92530ccb56e4564f09a01aa2a80e5a6654705`）。合并事实不证明 Windows Electron / 正式发布验收完成 |
+| 本刀开发分支 | `codex/p3-conv-picker-main`（Agent A）与 `codex/p3-conv-picker-ui`（Agent B），已集成至 `codex/ui-v1-integration`；本轮未核验真实环境采集 Electron 证据 |
 | 版本 | Desktop `0.3.0`；根目录旧扩展 `0.2.0`，见各自 package.json |
 | 开发/发布资格 | `DEV_BASELINE_READY=YES`（离线继续开发）；`RELEASE_READY=NO` |
 | 正式 P1 | `inconclusive`；`implementationMatches=false`；`p2GateOpen=false` |
@@ -29,6 +29,7 @@
 | 已实现；阶段 PARTIAL | 暖白/暖棕只读聊天档案、会话列表、220ms 搜索、500 条分页、当前页组合筛选/计数/空态、引用定位及高亮 | `desktop/src/renderer/{chat-archive-view,chat-archive,message-view}.js`、`desktop/src/renderer/styles/archive.css`、`desktop/tests/renderer-message-filter.test.ts` |
 | 已完成离线功能验证 | 真实 Main/Preload/SQLite 的账号/会话隔离；相同昵称不同 ID 不混淆，缺 senderId/system 中性布局；内容转义 | `desktop/src/core/{archive-db,desktop-api}.ts`、`desktop/src/renderer/message-view.js`；P1-b2 身份验收 7 项 |
 | 已完成离线功能验证 | 本地图片解码、音视频时间推进；持续可见节点保持、隐藏暂停/不自动恢复、离页清理，图片/音频证据回读 | `desktop/src/core/attachment-service.ts`、`desktop/src/renderer/message-view.js`、媒体相关测试及 Electron 报告 |
+| 已完成离线功能验证 | 可采集会话目录发现与浏览器中切换（P3-conversation-directory-picker）：adapter 提取联系人、打开会话；IPC `archive-select-conversation` 校验、采集状态与并发守卫；Renderer 消费 IPC 并展示 `.conversation--switching` 状态及错误恢复。已知待跟进：IPC handler 缺少头像本地落盘（`saveAvatarLocally`）调用 | `desktop/src/adapters/douyin-history-adapter.ts`、`desktop/src/main.ts`、`desktop/src/preload.cjs`、`desktop/src/renderer/{chat-archive-view,chat-archive}.js`；测试 `desktop/tests/{archive-select-conversation,douyin-history-adapter,renderer-conversation-picker}.test.ts`（22 项离线测试全部通过） |
 | 已完成基础模块 + 总览/互动/旅程日脊接线 | `summarizeConversationStats` + 全会话四字段投影 + 窄只读 IPC + 总览最小展示 + 互动展示已有 `kindCounts` / `dailyCounts` / `senderCounts` + 旅程展示已有 `dailyCounts` 的上海时区升序日脊，并旁注 `totalMessages` / `unknownTimestampCount` / `invalidTimestampCount`；范围=指定 accountId+conversationId 已归档全部行；不读取正文。主动发起/回复间隔/中位数口径未定，仍诚实空态。逐条 `messagePk`、引用跳转和火花引擎未授权，仍诚实空态 | `desktop/src/core/{conversation-stats,conversation-stats-service,archive-db}.ts`、`desktop/src/{main.ts,preload.cjs}`、`desktop/src/renderer/{analysis-stats,analysis-interaction,analysis-journey}.js`；自动化见对应测试。AI 仍空态 |
 | 部分完成 | SQLite/分页采集/游标恢复/旧档案补修/附件队列/ZIP 导出代码和自动化存在；UI 管理入口保留 | `desktop/src/core/{collector,archive-repair,archive-export,attachment-service}.ts`；正式联网路径被门禁关闭，不表示当前真实采集获验收 |
 | 部分完成 | ZIP 导出服务测试存在，P1-b2 实际窗口只验取消保存对话框后状态恢复 | `desktop/tests/archive-export.test.ts`；未在该轮验证实际系统保存对话框和最终 ZIP 文件 |
@@ -88,6 +89,7 @@ P1-b2 最终 35 项构成为历史阅读/媒体 21、Shell 3、真实身份/SQLi
 | R4 / MINOR、能力缺口，最小上下文已合入 | 最小 `accountId + conversationId` 上下文已合入 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`。检索、模型、持久化、来源快照和证据抽屉仍未做 | 不以昵称替代稳定 ID。AI 检索/模型/持久化仍未授权 |
 | R5 / 正式发布阻断 | P1 证据与当前实现不匹配，正式门关闭 | 需另行授权的真实证据工作；离线测试/文档不能解决或绕过 |
 | R6 / 环境限制 | Windows 缺 VS C++ 时 better-sqlite3 的 node-gyp 重编译可能失败 | 区分依赖环境与业务回归，先查锁文件/预构建/运行时兼容；系统工具需批准 |
+| R7 / MINOR，代码已合入、待后续跟进 | 遗漏调用：`desktop/src/main.ts` 中 `archive-select-conversation` IPC 处理函数目前未调用 `saveAvatarLocally` 保存可采集联系人头像到本地缓存 | 待后续小任务补充头像缓存逻辑与对应测试；不阻断会话切换与上下文刷新 |
 
 **已合入栈（2026-10-13 纠正）：**PR #1/#3/#2 代码已在 HEAD `fd3e2670…`。Windows Electron / Integration 验收仍待，不能把合并写成验收 PASS。`p2GateOpen` 保持 `false`；正式 P1 不改为 PASS；采集门不开放。
 
@@ -95,7 +97,9 @@ P1-b2 最终 35 项构成为历史阅读/媒体 21、Shell 3、真实身份/SQLi
 
 **已合入（analysis-interaction-stats-surface，PR #6）：**互动标签展示已有 `kindCounts`、`dailyCounts`、`senderCounts`。合并提交 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7`。不新增 IPC/DB，不硬编码样例数字。主动发起、回复间隔、中位数口径未定，保持诚实空态。该合并不是 P1、RELEASE 或 Windows Electron 验收 PASS。`p2GateOpen` 保持 `false`。
 
-**本刀（analysis-journey-day-spine）：**聊天旅程用已有 `dailyCounts` 做上海时区按日升序的日级归档脊，并旁注 `totalMessages`、`unknownTimestampCount`、`invalidTimestampCount`。标明「日级归档脊，不是逐条事件追溯」。无可归日计数时诚实空态。`messagePk` 定位、引用跳转、火花提醒仍未授权。不新增 IPC/DB，不发明主动发起或回复中位数口径。AI/检索/模型/持久化仍未授权。`p2GateOpen` 保持 `false`。
+**已合入（analysis-journey-day-spine，PR #7）：**聊天旅程用已有 `dailyCounts` 做上海时区按日升序的日级归档脊，并旁注 `totalMessages`、`unknownTimestampCount`、`invalidTimestampCount`。标明「日级归档脊，不是逐条事件追溯」。无可归日计数时诚实空态。`messagePk` 定位、引用跳转、火花提醒仍未授权。不新增 IPC/DB，不发明主动发起或回复中位数口径。AI/检索/模型/持久化仍未授权。`p2GateOpen` 保持 `false`。
+
+**已合入（P3-conversation-directory-picker）：**可采集会话目录发现与浏览器中切换已在 HEAD `8b1d2154468b47e79d573ea2d183e4fed71fc177`。合入 Agent A（`b531aa694279d0b3f5043049d25e7fcb9732e089`）与 Agent B（`97c92530ccb56e4564f09a01aa2a80e5a6654705`）。离线自动化 227/0/0 通过。该合并不是正式 P1、RELEASE 或 Windows Electron 完整验收 PASS。真实采集网络门禁保持关闭，`p2GateOpen` 保持 `false`。已知轻微遗漏 R7 待后续跟进。
 
 后续路线（均未授权、未执行）：逐条可追溯旅程（`messagePk` / 引用跳转）、火花引擎 → AI 状态结构 → 经授权的检索/模型/持久化。主动发起、回复中位数的定义及模型/云端授权/历史保存方案仍须确认。没有本页授权就不自动开工。
 
@@ -143,6 +147,40 @@ P1-b2 同目录另有 `root-tests.json`、`desktop-tests.json`、最终 `electro
 替代哪条历史记录、为什么（不删除原件）：
 ```
 
+
+### 2026-10-29 P3 会话目录与切换集成登记（离线自动化通过，未重跑真实 Electron 证据包）
+
+日期/时区：2026-10-29（Asia/Shanghai）。
+
+产品基线完整 SHA / 分支 / 本轮范围：UI 产品基线仍为 `15d6d9243c69d54488c0b96f6e55c63b79dcc3e0`。任务基线 `18ad5b0e40eb4e02c97f7713206add9bd33612dd`。集成目标分支 `codex/ui-v1-integration`，最终集成提交 `8b1d2154468b47e79d573ea2d183e4fed71fc177`。
+- Agent A 受审提交 `b531aa694279d0b3f5043049d25e7fcb9732e089`（分支 `codex/p3-conv-picker-main`），合并提交 `dd92ca98b5ff126388c426a60776dad7266a2706`。
+- Agent B 受审提交 `97c92530ccb56e4564f09a01aa2a80e5a6654705`（分支 `codex/p3-conv-picker-ui`），合并提交 `8b1d2154468b47e79d573ea2d183e4fed71fc177`。
+- 本轮范围：任务卡 `docs/tasks/P3-conversation-directory-picker.md`。实现从网页端提取可采集联系人目录并在浏览器中触发切换会话；Main 进程窄 IPC 契约 `archive-select-conversation` 并发与参数校验；Renderer 侧边栏消费 IPC、切换状态显示与错误恢复。
+
+实现变化（已完成/部分/尚未实现）：
+- 已完成：DouyinHistoryAdapter 的 `listConversationDirectory` 与 `selectConversationInBrowser`；DesktopArchiveApi 接口与 preload 窄 IPC 暴露；Main 进程 `archive-select-conversation` handler（参数与状态校验、并发守卫、上下文自动刷新）；Renderer 会话列表文案与空态更新、点击联系人触发切换、`.conversation--switching` 加载态样式及错误自动回退。
+- 部分完成/待跟进：`archive-select-conversation` IPC 处理函数缺少 `saveAvatarLocally` 头像落盘调用（列为 R7 跟进，不阻断本次集成）。
+- 尚未实现：真实网络在线采集联调仍受门禁限制，未在本次任务中开放。
+
+验证：
+- 根目录类型检查：`npm run check` PASS。
+- 根目录自动化测试：`npm test` 5 文件，8 通过 / 0 失败 / 0 跳过。
+- 桌面端类型检查：`npm --prefix desktop run check` PASS。
+- 桌面端自动化测试：`npm --prefix desktop test` 34 文件，219 通过 / 0 失败 / 0 跳过（合计 227/0/0 全部通过，含 Agent A 新增 12 项测试与 Agent B 新增 4 项测试）。
+- 开发构建：`npm --prefix desktop run build:dev` PASS。
+- 差异检查：`git diff --check` CLEAN。
+- 本轮为离线自动化测试，未生成新的真实 Electron 证据包，不把自动化通过写成正式 P1/RELEASE PASS。
+
+证据：Git 提交 SHA 与各阶段测试/构建命令行输出记录。
+
+正式门状态 / 风险编号变化 / 未验事项：
+- 门禁保持：`DEV_BASELINE_READY=YES`，`RELEASE_READY=NO`，正式 P1 仍 `inconclusive`，`implementationMatches=false`，`p2GateOpen=false`。
+- 风险变化：新增 R7（MINOR，头像本地缓存待跟进）。R1 竞态保持观察项与 INCONCLUSIVE。
+
+下一任务、所有者、共享契约与必要授权：
+- 头像本地缓存补修（Agent A）；真实环境端到端采集与联调需另行授权。
+
+替代哪条历史记录、为什么（不删除原件）：补充 2026-10-13 旅程日脊登记，记录 P3 会话目录与切换功能的合入。历史记录与 P1-b2 竞态原件保留。
 
 ### 2026-10-13 旅程日脊登记（不是完整 Electron 阶段验收）
 
