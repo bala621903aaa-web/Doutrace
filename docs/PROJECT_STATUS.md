@@ -1,6 +1,6 @@
 # DouTrace 项目状态
 
-最后核对：**2026-10-29（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。PR #1/#3/#2 已合入历史集成提交 `fd3e267048dcba241e96b2331183e21e4c1ec6de`（合并提交依次为 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`、`2f7ce75810385140952012c3302c214d3b1e785b`、`d79fde30f4f1dc95cedec032302a3306651584fa`）；PR #4 合入过时「未合并」表述后已纠正。PR #5（全会话统计契约与总览接线）已合入 `ee9621156e567830e250053a5d8454389e5d539c`。PR #6（互动标签复用已有统计字段）已合入集成基线 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7`。PR #7（旅程日脊）已合入基线。任务 P3（可采集会话目录与切换 `P3-conversation-directory-picker`）已合入集成提交 `8b1d2154468b47e79d573ea2d183e4fed71fc177`（Agent A: `b531aa694279d0b3f5043049d25e7fcb9732e089`，Agent B: `97c92530ccb56e4564f09a01aa2a80e5a6654705`）。下文源码/测试路径均相对于仓库根目录，桌面代码统一使用 `desktop/src/`、`desktop/tests/` 前缀。
+最后核对：**2026-10-29（Asia/Shanghai）**。本页是可持续更新的事实索引，不替代原始报告或开启发布门。PR #1/#3/#2 已合入历史集成提交 `fd3e267048dcba241e96b2331183e21e4c1ec6de`（合并提交依次为 `c8fa2b9318af03ff69b6655adcc8d2797dc3eb2e`、`2f7ce75810385140952012c3302c214d3b1e785b`、`d79fde30f4f1dc95cedec032302a3306651584fa`）；PR #4 合入过时「未合并」表述后已纠正。PR #5（全会话统计契约与总览接线）已合入 `ee9621156e567830e250053a5d8454389e5d539c`。PR #6（互动标签复用已有统计字段）已合入集成基线 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7`。PR #7（旅程日脊）已合入基线；前期分析页面 hidden CSS 修复在 `18ad5b0e40eb4e02c97f7713206add9bd33612dd` 完成阶段性闭环。任务 P3（可采集会话目录与切换 `P3-conversation-directory-picker`）已合入集成提交 `8b1d2154468b47e79d573ea2d183e4fed71fc177`（Agent A: `b531aa694279d0b3f5043049d25e7fcb9732e089`，Agent B: `97c92530ccb56e4564f09a01aa2a80e5a6654705`）。下文源码/测试路径均相对于仓库根目录，桌面代码统一使用 `desktop/src/`、`desktop/tests/` 前缀。
 
 ## 1. 基线与交付边界
 
@@ -8,15 +8,17 @@
 | --- | --- |
 | UI 产品基线 | `15d6d9243c69d54488c0b96f6e55c63b79dcc3e0` |
 | 本地 UI 集成分支 | `codex/ui-v1-integration` |
+| 本次 CSS 修复集成 HEAD | `18ad5b0e40eb4e02c97f7713206add9bd33612dd`；受审修复 `de66909791b5142efed953ff3c7ba8ef266eecd7`，父提交为 `c1bd2ad038826a9cf8a682b62b6ebd43be8cfc7f` 与该修复提交；归档记录见第 7 节 |
 | 协作文档分支（历史） | `codex/docs-ai-collaboration`，从上述产品基线创建；该文档提交不改变产品基线 |
-| 已合入修复栈（代码） | 包含 PR #1/#3/#2/#5/#6/#7，以及任务 P3-conversation-directory-picker（集成提交 `8b1d2154468b47e79d573ea2d183e4fed71fc177`，依次合入 Agent A `b531aa694279d0b3f5043049d25e7fcb9732e089` 与 Agent B `97c92530ccb56e4564f09a01aa2a80e5a6654705`）。合并事实不证明 Windows Electron / 正式发布验收完成 |
+| 已合入修复栈（代码） | 包含 PR #1/#3/#2/#5/#6/#7、CSS 修复（HEAD `18ad5b0e40eb4e02c97f7713206add9bd33612dd`），以及任务 P3-conversation-directory-picker（集成提交 `8b1d2154468b47e79d573ea2d183e4fed71fc177`，依次合入 Agent A `b531aa694279d0b3f5043049d25e7fcb9732e089` 与 Agent B `97c92530ccb56e4564f09a01aa2a80e5a6654705`）。合并事实不证明 Windows Electron / 正式发布验收完成 |
 | 本刀开发分支 | `codex/p3-conv-picker-main`（Agent A）与 `codex/p3-conv-picker-ui`（Agent B），已集成至 `codex/ui-v1-integration`；本轮未核验真实环境采集 Electron 证据 |
+| 前期开发分支 | `codex/analysis-journey-day-spine`（聊天旅程日级归档脊，复用已有 `dailyCounts`）；其旧条目的验收边界见第 7 节 |
 | 版本 | Desktop `0.3.0`；根目录旧扩展 `0.2.0`，见各自 package.json |
 | 开发/发布资格 | `DEV_BASELINE_READY=YES`（离线继续开发）；`RELEASE_READY=NO` |
 | 正式 P1 | `inconclusive`；`implementationMatches=false`；`p2GateOpen=false` |
 | 开发模式 | `development-mode.json` 标记，真实连接/采集/在线补修和附件重试禁用；离线阅读/导出可用 |
 
-用户已告知此 UI 版本推送到 GitHub 并设为默认分支。未来任务必须重新核对实际 HEAD，不能由默认分支或草稿推导发布资格。本轮旅程日脊不改变 `DEV_BASELINE_READY`、`RELEASE_READY`、正式 P1、`implementationMatches` 或 `p2GateOpen`，也不开放采集、在线补修或附件重试。
+用户已告知此 UI 版本推送到 GitHub 并设为默认分支。未来任务必须重新核对实际 HEAD，不能由默认分支或草稿推导发布资格。本次 CSS 修复验收不改变 `DEV_BASELINE_READY`、`RELEASE_READY`、正式 P1、`implementationMatches` 或 `p2GateOpen`，也不开放采集、在线补修或附件重试。
 
 **历史文档冲突：**`HANDOFF.md` 的 2026-10-04 P1 PASS、`desktop/README.md` 的旧测试数量/未验项是当时快照。当前正式状态取 [P1 汇总](../desktop/P1-ACCEPTANCE-SUMMARY.md)及对应 JSON、真实发布校验源码；UI 后续合成验收不能使已失效的 P1 证据复活。本轮保留旧文档及报告原件。UI 路线中的“P2 聊天分析”是开发阶段名，不等于真实采集 P2 门已开放。
 
@@ -26,6 +28,7 @@
 | --- | --- | --- |
 | 已完成 | 本地 Renderer 构建迁移与最小模块拆分；esbuild 把业务模块打入单一 renderer.js，另有本地 CSS/HTML/SVG | `desktop/scripts/build-renderer.mjs`、`desktop/tests/renderer-test-dom.ts` |
 | 已完成 | 单 TitleBar、64px rail、五入口、分析四标签；离开档案清理媒体/失效请求，返回重载 | `desktop/src/renderer/shell/app-shell.js`、`desktop/src/renderer/renderer.js`、`desktop/tests/app-shell.test.ts` |
+| CSS 修复阶段性验收 PASS | 分析标签的空态与非当前统计面板在 `hidden` 时计算样式为 `display: none`；总览、互动、旅程和 AI 洞察在已验状态下无内容混显。只证明本次 CSS 可见性缺陷闭环 | `desktop/src/renderer/styles/{shell,analysis}.css`、`desktop/tests/renderer-analysis-visibility.test.ts`；真实 Electron 证据见第 4、6、7 节 |
 | 已实现；阶段 PARTIAL | 暖白/暖棕只读聊天档案、会话列表、220ms 搜索、500 条分页、当前页组合筛选/计数/空态、引用定位及高亮 | `desktop/src/renderer/{chat-archive-view,chat-archive,message-view}.js`、`desktop/src/renderer/styles/archive.css`、`desktop/tests/renderer-message-filter.test.ts` |
 | 已完成离线功能验证 | 真实 Main/Preload/SQLite 的账号/会话隔离；相同昵称不同 ID 不混淆，缺 senderId/system 中性布局；内容转义 | `desktop/src/core/{archive-db,desktop-api}.ts`、`desktop/src/renderer/message-view.js`；P1-b2 身份验收 7 项 |
 | 已完成离线功能验证 | 本地图片解码、音视频时间推进；持续可见节点保持、隐藏暂停/不自动恢复、离页清理，图片/音频证据回读 | `desktop/src/core/attachment-service.ts`、`desktop/src/renderer/message-view.js`、媒体相关测试及 Electron 报告 |
@@ -46,10 +49,10 @@
 - Main：`desktop/src/main.ts` 注册窄 IPC、SQLite/媒体/导出/采集服务，精确检查当前窗口主帧与本地 index.html；Preload：`desktop/src/preload.cjs` 只暴露 `desktopArchive`，类型在 `desktop/src/core/desktop-api.ts`。
 - 数据：`desktop/src/core/archive-db.ts` 的账号/会话范围、持久 `messagePk` 和平台消息 ID；`desktop/src/adapters/douyin-history-adapter.ts` 是受门禁保护的真实历史适配器。UI 不直接操作 SQL、文件系统或供应商密钥。
 - Renderer：原生 DOM/JS、本地 CSS，无新增前端框架。`desktop/src/renderer/renderer.js` 装配唯一控制器与管理事件；`desktop/src/renderer/chat-archive.js` 管理请求/选择/分页/引用；`desktop/src/renderer/message-view.js` 管理消息 DOM/媒体/筛选；视图与样式局部隔离。
-- Shell：单一受信任入口 URL + 内存导航，持久 module root 切 hidden，不重建档案根；契约见 [P1B1-SHELL-CONTRACT.md](../P1B1-SHELL-CONTRACT.md)。已含可选分析上下文，以及总览 `#analysis-stats-content`、互动 `#analysis-interaction-content`、旅程日脊 `#analysis-journey-content` 边界。三者复用同一窄统计 IPC `archive-get-conversation-stats`，离开各自标签作废在途请求；DB 仍只投影 sender/kind/sentAtMs，本刀不新增 IPC，也不新增事件表。共享入口、IPC、schema、tokens 变更先由单一所有者固定，不能 A/B 并改。
+- Shell：单一受信任入口 URL + 内存导航，持久 module root 切 hidden，不重建档案根；契约见 [P1B1-SHELL-CONTRACT.md](../P1B1-SHELL-CONTRACT.md)。已含可选分析上下文，以及总览 `#analysis-stats-content`、互动 `#analysis-interaction-content`、旅程日脊 `#analysis-journey-content` 边界。三者复用同一窄统计 IPC `archive-get-conversation-stats`，离开各自标签作废在途请求；DB 仍只投影 sender/kind/sentAtMs。此次在 `.module-empty[hidden]` 与 `.analysis-stats[hidden]` 明确设 `display: none`，防止布局 `display: grid` 使隐藏内容可见；未新增 IPC 或事件表。共享入口、IPC、schema、tokens 变更先由单一所有者固定，不能 A/B 并改。
 - UI 冻结规则完整列于 [AGENTS.md](../AGENTS.md)：四个业务导航+底部设置、四分析标签、只读档案、单联系人 AI/固定来源/精确证据定位。设计目标不计入已实现能力。
 
-## 4. 验收记录（历史执行，不是本轮重跑）
+## 4. 验收记录（各次历史执行，本轮文档未重跑）
 
 | 阶段/日期 | 集成完整 SHA | 自动化通过/失败/跳过 | Electron 与结论 |
 | --- | --- | --- | --- |
@@ -58,8 +61,9 @@
 | P1-b1 / 2026-10-11 | `198355817d8bc71c3a6b887becde9942cdcd9a27` | 根 8/0/0；Desktop 166/0/0 | 24/0/0；原报告 PARTIAL（当时拖动未确认），后由用户确认标题栏拖动正常；原件未改 |
 | P1-b2 / 2026-10-11 | `15d6d9243c69d54488c0b96f6e55c63b79dcc3e0` | 根 **8/0/0**；Desktop **168/0/0**；合计 **176/0/0** | 最终 **35/0/0**；历史阶段结论仍 **PARTIAL** |
 | 最后一次竞态 / 2026-10-11 | 同上 P1-b2 SHA | 未重跑全套 | 原操作定向 **1/0/0**；`RACE_FINAL_CHECK: PASS`，历史原因仍 INCONCLUSIVE |
+| 分析 hidden CSS / 2026-10-15 至 16 | `18ad5b0e40eb4e02c97f7713206add9bd33612dd` | 根 **8/0/0**；Desktop **203/0/0**；合计 **211/0/0**（Desktop 含可见性专项 4 项，不重复计数）；两处 check、`build:dev` 通过 | 真实 Electron **14/0/0**、**17 次计算样式可见性检查**、17 张真实窗口截图；最终 Reviewer C **PASS**，BLOCKER/MAJOR/MINOR **0/0/0**；仅本 CSS 缺陷阶段性关闭 |
 
-上述阶段根/Desktop 类型检查和 `build:dev` 均通过；正式 build 未获发布资格。不要把专项、复测及最终全套重复累计为“新增通过数”。本轮文档检查不替代新功能阶段的完整回归。
+上述阶段根/Desktop 类型检查和 `build:dev` 均通过；正式 build 未获发布资格。不要把专项、复测及最终全套重复累计为“新增通过数”。2026-10-15 集成报告当时记为 PARTIAL，是因真实 Electron 尚未执行；其后同一 HEAD 的 Electron 验收与独立复审使本次 CSS 缺陷达到阶段性 PASS，不改写原报告。本轮文档检查不替代新功能阶段的完整回归。
 
 P1-b2 最终 35 项构成为历史阅读/媒体 21、Shell 3、真实身份/SQLite/IPC 7、布局操作 4。合成数据最终 3 账号/5 会话/**521 条消息**，3 份 PNG/WAV/MP4；运行 Electron **44.5.1**、内置 Node **24.21.0**、better-sqlite3 **13.0.3**、SQLite **3.53.4**。这是历史实测环境，不保证新克隆依赖/原生绑定已准备好。
 
@@ -97,7 +101,7 @@ P1-b2 最终 35 项构成为历史阅读/媒体 21、Shell 3、真实身份/SQLi
 
 **已合入（analysis-interaction-stats-surface，PR #6）：**互动标签展示已有 `kindCounts`、`dailyCounts`、`senderCounts`。合并提交 `78ff3c7cb6a4d05a6344f31dab39e775a4e83be7`。不新增 IPC/DB，不硬编码样例数字。主动发起、回复间隔、中位数口径未定，保持诚实空态。该合并不是 P1、RELEASE 或 Windows Electron 验收 PASS。`p2GateOpen` 保持 `false`。
 
-**已合入（analysis-journey-day-spine，PR #7）：**聊天旅程用已有 `dailyCounts` 做上海时区按日升序的日级归档脊，并旁注 `totalMessages`、`unknownTimestampCount`、`invalidTimestampCount`。标明「日级归档脊，不是逐条事件追溯」。无可归日计数时诚实空态。`messagePk` 定位、引用跳转、火花提醒仍未授权。不新增 IPC/DB，不发明主动发起或回复中位数口径。AI/检索/模型/持久化仍未授权。`p2GateOpen` 保持 `false`。
+**前期旅程日脊（analysis-journey-day-spine，PR #7）：**聊天旅程用已有 `dailyCounts` 做上海时区按日升序的日级归档脊，并旁注 `totalMessages`、`unknownTimestampCount`、`invalidTimestampCount`。标明「日级归档脊，不是逐条事件追溯」。无可归日计数时诚实空态。`messagePk` 定位、引用跳转、火花提醒仍未授权。不新增 IPC/DB，不发明主动发起或回复中位数口径。AI/检索/模型/持久化仍未授权。`p2GateOpen` 保持 `false`。
 
 **已合入（P3-conversation-directory-picker）：**可采集会话目录发现与浏览器中切换已在 HEAD `8b1d2154468b47e79d573ea2d183e4fed71fc177`。合入 Agent A（`b531aa694279d0b3f5043049d25e7fcb9732e089`）与 Agent B（`97c92530ccb56e4564f09a01aa2a80e5a6654705`）。离线自动化 227/0/0 通过。该合并不是正式 P1、RELEASE 或 Windows Electron 完整验收 PASS。真实采集网络门禁保持关闭，`p2GateOpen` 保持 `false`。已知轻微遗漏 R7 待后续跟进。
 
@@ -130,6 +134,16 @@ P1-b2 同目录另有 `root-tests.json`、`desktop-tests.json`、最终 `electro
 
 更早报告位于同根 `artifacts/p1-a1-integration/`、`artifacts/p1-a2-integration/`、`artifacts/p1-b1-integration/`。P0 计划/证据来源清单仍是该根两份未跟踪文件；c566 原件及旧 Agent 工作树保留，不纳入本次提交。
 
+本次 CSS 修复证据均为本机 Git 忽略文件，不随文档提交交付；以下哈希为本次归档核对值，不覆盖旧报告。集成树 `<repo-root>/artifacts/analysis-hidden-integration-20261015-01/` 的 `manifest.json` 记录完整 HEAD、两父提交、五项命令退出码及日志 SHA256；`INTEGRATION-REPORT.md` 的旧 PARTIAL 是 Electron 验收之前的时间点。独立测试树 `C:/Users/25222/.codex/worktrees/doutrace-ui-smoke-analysis-hidden-20261015-18ad5b0/抖音聊天记录抓取` 在同一 HEAD，验收目录为 `artifacts/analysis-hidden-electron-20261015-18ad5b0-01/`。该目录的 `evidence-manifest.json` 索引原始结果、隔离路径、合成夹具及截图。先前 Reviewer C 最终审查见本机 Codex 对话 `01a13ed6-87e4-7433-9b54-39d0c7eeed07`，原生子 Agent `01a14510-28f6-7923-982c-ddc0a34c4e30`；其结论为 `ANALYSIS_HIDDEN_FINAL_REVIEW_STATUS=PASS`，BLOCKER/MAJOR/MINOR 均为 0。
+
+| 本次核对原件 | 位置与可用性 | SHA256 |
+| --- | --- | --- |
+| `INTEGRATION-REPORT.md` | 集成树上述目录，本机已读 | `34cea2b5577ec047a68ccea021916d740707051ed9a36239c27ceed0ccacd173` |
+| `ACCEPTANCE-REPORT.md` | 独立测试树上述目录，本机已读 | `012ff661cfefe943b553e3481f51f92e825501538110ba2d4be47ff9499f56ad` |
+| `electron-results-attempt-05.json` | 同上，14 项与 17 张截图的原始结果；清单登记 | `f3230d3c153f134233ae3dc29edbc31c21ea06330aea4124bf7afaef68ff351a` |
+
+17 张截图与 54 份清单文件的大小和 SHA256 在上述最终独立审查中重算吻合；`evidence-manifest.json` 记录每张截图的哈希。零数据与失败/重试使用测试专用 IPC 注入，520 条正常成功路径使用真实服务。监测在产品 Main 导入和首窗口前注册，只覆盖随后 Electron Session 页面/媒体请求；观察到 HTTP(S) 0、Renderer/console/webContents 错误 0，不覆盖更早启动或非 Session Node/Playwright 网络。
+
 设计来源为仓库外、仅本地可用的 `DouTrace-UI-Reference/` 资料目录，内有完整交接记录与最终 Stitch 包；部分文件名使用 URL 百分号编码，可解码名称定位 `DouTrace_UI设计分支_完整交接记录.md`。文档建立时读取交接决策，不重新设计或复制整个参考包。未持有资料的未来 Agent 应先向资料持有人确认目录位置与可用性；冻结规则已摘要到 AGENTS.md。
 
 ## 7. 更新记录规范
@@ -146,7 +160,6 @@ P1-b2 同目录另有 `root-tests.json`、`desktop-tests.json`、最终 `electro
 下一任务、所有者、共享契约与必要授权：
 替代哪条历史记录、为什么（不删除原件）：
 ```
-
 
 ### 2026-10-29 P3 会话目录与切换集成登记（离线自动化通过，未重跑真实 Electron 证据包）
 
@@ -180,7 +193,21 @@ P1-b2 同目录另有 `root-tests.json`、`desktop-tests.json`、最终 `electro
 下一任务、所有者、共享契约与必要授权：
 - 头像本地缓存补修（Agent A）；真实环境端到端采集与联调需另行授权。
 
-替代哪条历史记录、为什么（不删除原件）：补充 2026-10-13 旅程日脊登记，记录 P3 会话目录与切换功能的合入。历史记录与 P1-b2 竞态原件保留。
+替代哪条历史记录、为什么（不删除原件）：补充 2026-10-16 CSS 修复归档与 2026-10-13 旅程日脊登记，记录 P3 会话目录与切换功能的合入。历史记录与 P1-b2 竞态原件保留。
+
+### 2026-10-16 分析页面 hidden CSS 修复闭环归档
+
+日期/时区：2026-10-16（Asia/Shanghai）；修复集成和主要验收执行于 2026-10-15，最终独立复审于 2026-10-16。本条是纯文档归档，未重跑自动化或 Electron。
+
+产品基线完整 SHA / 分支 / 范围：UI 产品基线 `15d6d9243c69d54488c0b96f6e55c63b79dcc3e0` 是集成 HEAD 的祖先。正式树 `codex/ui-v1-integration` 的 CSS 修复集成 HEAD 为 `18ad5b0e40eb4e02c97f7713206add9bd33612dd`，父提交 `c1bd2ad038826a9cf8a682b62b6ebd43be8cfc7f` 与受审修复 `de66909791b5142efed953ff3c7ba8ef266eecd7`。修复范围仅 `desktop/src/renderer/styles/shell.css`、`desktop/src/renderer/styles/analysis.css`、`desktop/tests/renderer-analysis-visibility.test.ts`。本条仅更新 `docs/PROJECT_STATUS.md`。
+
+实现与验证：`.module-empty[hidden]`、`.analysis-stats[hidden]` 显式 `display: none`，解决网格布局覆盖浏览器隐藏行为。集成 HEAD 的根测试 **8/0/0**、Desktop **203/0/0**，合计 **211/0/0**；Desktop 包含 4 项构建后 Renderer 可见性专项。根/Desktop check、Desktop `build:dev`、`git diff --check` 通过。相同 HEAD 的隔离真实 Electron **14/0/0**、17 次计算样式可见性检查及 17 张截图，涵盖四分析标签、无上下文、加载、成功、零数据、失败/重试、恢复与窄窗口；原生 Reviewer C 最终 **PASS**，BLOCKER/MAJOR/MINOR **0/0/0**。本次 CSS 缺陷阶段性关闭，不推导整个分析功能或正式发布通过。
+
+证据与边界：第 6 节列出本机原件位置、哈希和 Reviewer C 对话。验收使用同 HEAD 独立测试树、合成 2 账号/4 会话/527 条消息、隔离数据库及 appData/userData/sessionData/APPDATA/LOCALAPPDATA/TEMP/TMP。正常成功路径读取真实 Main/Preload/SQLite；零数据和失败/重试由测试专用 IPC 注入。网络监测仅覆盖注册后的 Electron Session。早期四次验收脚本/夹具尝试的失败原件保留，最终第 5 次通过；2026-10-16 窗口重开检查不重复累计 14 项。
+
+门禁 / 未验事项：P1-b2 保留历史 **PARTIAL** 与 `RACE_DIAGNOSIS=INCONCLUSIVE`；`DEV_BASELINE_READY=YES` 只支持离线开发，`RELEASE_READY=NO`、正式 P1 `inconclusive`、`implementationMatches=false`、`p2GateOpen=false` 均不变。听感、音量与长时播放，个人视觉/字体偏好，其他 DPI/多屏、OS 窗控、真实保存对话框及最终 ZIP 文件仍待人工验收。未推送 GitHub、未合并 PR #8、未启动新功能。
+
+替代关系：补充 2026-10-15 `INTEGRATION-REPORT.md` 在 Electron 尚未执行时的 PARTIAL；保留该原件和第 4 节 P1-b2 历史 PARTIAL，不改写其结论。先前旅程日脊、互动与统计契约记录只代表各自当时范围。
 
 ### 2026-10-13 旅程日脊登记（不是完整 Electron 阶段验收）
 
