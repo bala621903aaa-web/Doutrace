@@ -9,6 +9,7 @@ describe('desktop IPC contract wiring', () => {
       readFile(new URL('../src/main.ts', import.meta.url), 'utf8')
     ]);
     const methods = [
+      ['selectConversation', 'archive-select-conversation'],
       ['repairConversation', 'archive-repair-conversation'],
       ['cancelRepair', 'archive-cancel-repair'],
       ['retryAttachment', 'archive-retry-attachment'],

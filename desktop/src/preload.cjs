@@ -5,6 +5,7 @@ const api = {
   getContext: () => ipcRenderer.invoke('archive-get-context'),
   connect: () => ipcRenderer.invoke('archive-connect'),
   refreshContext: () => ipcRenderer.invoke('archive-refresh-context'),
+  selectConversation: input => ipcRenderer.invoke('archive-select-conversation', input),
   startCapture: input => ipcRenderer.invoke('archive-start-capture', input),
   stopCapture: () => ipcRenderer.invoke('archive-stop-capture'),
   getCollector: () => ipcRenderer.invoke('archive-get-collector'),

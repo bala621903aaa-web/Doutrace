@@ -165,6 +165,84 @@ export class DouyinHistoryAdapter implements HistoryAdapter {
     return { accountId, source: 'douyin.self-profile' };
   }
 
+  async listConversationDirectory(): Promise<ConversationInfo[]> {
+    this.assertTrustedPage();
+    const directory = ((await this.session.page.evaluate(CONVERSATION_DIRECTORY_SCRIPT)) ?? []) as ConversationDirectoryItem[];
+    const result: ConversationInfo[] = [];
+    for (const item of directory) {
+      if (!item || !item.conversationId) continue;
+      result.push({
+        conversationId: item.conversationId,
+        title: item.title || item.conversationId,
+        participantIds: item.participantIds ?? [],
+        source: 'douyin.conversationStore-or-dom'
+      });
+    }
+    return result;
+  }
+
+  async selectConversationInBrowser(conversationId: string, timeoutMs = 3_000): Promise<void> {
+    this.assertTrustedPage();
+    if (typeof conversationId !== 'string' || !conversationId.trim()) {
+      throw new Error('conversationId 无效。');
+    }
+
+    const clicked = await this.session.page.evaluate((targetId: string) => {
+      const escapeVal = (val: string) => (window.CSS && typeof window.CSS.escape === 'function' ? window.CSS.escape(val) : val.replace(/["\\]/g, '\\$&'));
+      const escaped = escapeVal(targetId);
+      const selector = `[data-conversation-id="${escaped}"], [data-conv-id="${escaped}"], [data-id="${escaped}"]`;
+      const element = document.querySelector(selector);
+      if (element instanceof HTMLElement) {
+        element.click();
+        return true;
+      }
+      if (element) {
+        (element as unknown as { click?: () => void }).click?.();
+        return true;
+      }
+      try {
+        const store = (window as unknown as {
+          conversationStore?: {
+            setCurrentConversation?: (id: string) => void;
+            selectConversation?: (id: string) => void;
+            changeCurrentConversation?: (id: string) => void;
+          };
+        }).conversationStore;
+        if (store) {
+          if (typeof store.setCurrentConversation === 'function') {
+            store.setCurrentConversation(targetId);
+            return true;
+          }
+          if (typeof store.selectConversation === 'function') {
+            store.selectConversation(targetId);
+            return true;
+          }
+          if (typeof store.changeCurrentConversation === 'function') {
+            store.changeCurrentConversation(targetId);
+            return true;
+          }
+        }
+      } catch {}
+      return false;
+    }, conversationId);
+
+    if (!clicked) {
+      throw new Error('browser-conversation-not-visible');
+    }
+
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      this.assertTrustedPage();
+      const selected = await this.selectedConversationId().catch(() => null);
+      if (selected === conversationId) {
+        return;
+      }
+      await sleep(100);
+    }
+
+    throw new Error(`browser-select-conversation-timeout:${conversationId}`);
+  }
+
   async listPrivateConversations(): Promise<ConversationInfo[]> {
     this.assertTrustedPage();
     const directory = await this.session.page.evaluate(CONVERSATION_DIRECTORY_SCRIPT) as ConversationDirectoryItem[];
