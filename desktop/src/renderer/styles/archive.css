@@ -89,6 +89,12 @@
 }
 .chat-archive-page .conversation:hover:not(:disabled) { background: #f0ece4; border-color: transparent; border-bottom-color: var(--color-border); }
 .chat-archive-page .conversation.selected { background: #fff; border-left-color: var(--color-accent); }
+.chat-archive-page .conversation.conversation--switching,
+.conversation--switching {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: wait;
+}
 .chat-archive-page .archive-avatar,
 .chat-archive-page .message-avatar {
   display: grid;
