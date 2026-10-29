@@ -192,7 +192,7 @@ async function refreshContext() {
   if (exporting) throw new Error('导出期间暂不能刷新浏览器会话。');
   if (!adapter) throw new Error('请先连接独立浏览器。');
   activeAccount = await adapter.getAccount();
-  activeConversations = await adapter.listPrivateConversations();
+  activeConversations = await adapter.listConversationDirectory();
   database?.upsertAccount(activeAccount);
   for (const conversation of activeConversations) database?.upsertConversation(activeAccount.accountId, conversation);
   if (releaseValidation.acquisitionEnabled) {
@@ -201,7 +201,7 @@ async function refreshContext() {
       sendContext();
     });
   }
-  browserStatus = activeConversations.length ? `已读取 ${activeConversations.length} 个会话；请在浏览器保持目标会话选中。` : '尚未观察到会话列表；请在浏览器打开一个既有私聊后重试。';
+  browserStatus = activeConversations.length ? `已读取 ${activeConversations.length} 个会话；请在列表中选择要采集的联系人。` : '尚未观察到会话列表；请在浏览器打开一个既有私聊后重试。';
   sendContext();
   return {
     account: activeAccount,
@@ -217,6 +217,28 @@ handleArchive('app-state', () => appState());
 handleArchive('archive-get-context', () => currentContext());
 handleArchive('archive-connect', () => connectBrowser());
 handleArchive('archive-refresh-context', () => refreshContext());
+handleArchive('archive-select-conversation', async (_event, input: { conversationId: string }) => {
+  if (!adapter) throw new Error('请先连接独立浏览器。');
+  if (!releaseValidation.acquisitionEnabled || developmentMode) throw new Error(appState().message);
+  if (typeof input?.conversationId !== 'string' || !input.conversationId.trim()) throw new Error('conversationId 无效。');
+  if (exporting) throw new Error('导出期间暂不能切换会话。');
+  await collector?.stopAndWait();
+  await archiveRepair?.cancelAndWait();
+  browserStatus = `正在切换浏览器会话到：${input.conversationId}…`;
+  sendContext();
+  await adapter.selectConversationInBrowser(input.conversationId);
+  // 切换成功后，调用 listPrivateConversations() 获取带流量验证的完整会话信息
+  const conversations = await adapter.listPrivateConversations();
+  activeAccount = await adapter.getAccount();
+  activeConversations = conversations;
+  database?.upsertAccount(activeAccount);
+  for (const conv of conversations) {
+    database?.upsertConversation(activeAccount.accountId, conv);
+  }
+  browserStatus = `已切换至：${conversations[0]?.title || input.conversationId}，可开始采集。`;
+  sendContext();
+  return currentContext();
+});
 handleArchive('archive-get-collector', () => collector?.snapshot() ?? emptyCollector);
 handleArchive('archive-start-capture', async (_event, input: { conversationId: string; resume?: boolean; maxPages?: number; stopAfterPages?: number }) => {
   if (!collector || !activeAccount) throw new Error('请先连接浏览器并刷新会话。');

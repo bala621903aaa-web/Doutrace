@@ -48,6 +48,7 @@ export interface DesktopArchiveApi {
   getContext(): Promise<DesktopContext>;
   connect(): Promise<DesktopAppState>;
   refreshContext(): Promise<DesktopContext>;
+  selectConversation(input: { conversationId: string }): Promise<DesktopContext>;
   startCapture(input: { conversationId: string; resume?: boolean; maxPages?: number; stopAfterPages?: number }): Promise<CollectorSnapshot>;
   stopCapture(): Promise<CollectorSnapshot>;
   getCollector(): Promise<CollectorSnapshot>;
