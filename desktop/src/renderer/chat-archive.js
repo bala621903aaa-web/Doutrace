@@ -38,15 +38,38 @@ export function createChatArchiveController({ api, state, $, esc, setStatus, ren
     void loadMessages();
   }
 
+  async function handleConversationClick(conversationId, button) {
+    const accountId = state.context.account?.accountId;
+    const canAcquire = Boolean(accountId && state.app?.acquisitionEnabled && typeof api?.selectConversation === 'function');
+    if (!canAcquire) {
+      selectConversation(accountId, conversationId);
+      return;
+    }
+    button.classList.add('conversation--switching');
+    setStatus('正在切换浏览器会话…');
+    try {
+      const newContext = await api.selectConversation({ conversationId });
+      if (newContext) {
+        state.context = newContext;
+      }
+      selectConversation(state.context.account?.accountId || accountId, conversationId);
+    } catch (error) {
+      button.classList.remove('conversation--switching');
+      setStatus(error.message || String(error), true);
+    }
+  }
+
   function renderConversations() {
     const items = state.context.conversations || [];
     const query = $('conversationSearch').value.trim().toLocaleLowerCase();
     const matching = items.filter(item => (item.title || '当前私聊').toLocaleLowerCase().includes(query));
     $('conversations').innerHTML = matching.length
       ? matching.map(item => conversationButton(item, 'conversation', state.context.account?.accountId, '浏览器中选定的私聊')).join('')
-      : `<div class="empty">${items.length ? '没有匹配的当前会话。' : '在独立浏览器打开一个私聊后刷新。'}</div>`;
+      : `<div class="empty">${items.length ? '没有匹配的当前会话。' : '连接浏览器并刷新后，此处显示所有可采集的联系人。'}</div>`;
     document.querySelectorAll('[data-conversation]').forEach(button => {
-      button.addEventListener('click', () => selectConversation(state.context.account?.accountId, button.dataset.conversation));
+      button.addEventListener('click', () => {
+        void handleConversationClick(button.dataset.conversation, button);
+      });
     });
     const selected = items.find(item => item.conversationId === state.selectedId);
     $('selected').textContent = selected ? `已选：${selected.title || '当前私聊'}` : '请先选择当前浏览器中的会话';
